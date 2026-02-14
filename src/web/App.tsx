@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useReducer,
+  useRef,
 } from "react";
 import { api, subscribeSSE } from "./lib/api.ts";
 import type {
@@ -90,6 +91,7 @@ export const useApp = () => useContext(AppContext);
 
 export function App() {
   const [state, dispatch] = useReducer(reducer, initial);
+  const activeNoteIdRef = useRef<string | null>(null);
 
   const refresh = useCallback(async () => {
     const [notes, connections, tree, memory, mission] = await Promise.all([
@@ -135,15 +137,25 @@ export function App() {
   }).length;
 
   useEffect(() => {
+    activeNoteIdRef.current = state.activeNote?.frontmatter.id ?? null;
+  }, [state.activeNote]);
+
+  useEffect(() => {
     refresh();
     const unsub = subscribeSSE((event) => {
       if (event === "notes-updated") {
         api.listNotes().then((notes) => dispatch({ type: "SET_NOTES", notes }));
         api.getTree().then((tree) => dispatch({ type: "SET_TREE", tree }));
-        if (state.activeNote) {
-          api.getNote(state.activeNote.frontmatter.id).then((note) =>
-            dispatch({ type: "SET_ACTIVE_NOTE", note })
-          );
+
+        const activeId = activeNoteIdRef.current;
+        if (activeId) {
+          api
+            .getNote(activeId)
+            .then((note) => dispatch({ type: "SET_ACTIVE_NOTE", note }))
+            .catch(() => {
+              dispatch({ type: "SET_ACTIVE_NOTE", note: null });
+              dispatch({ type: "SET_VIEW", view: "list" });
+            });
         }
       } else if (event === "connections-updated") {
         api.getConnections().then((c) => dispatch({ type: "SET_CONNECTIONS", connections: c }));
