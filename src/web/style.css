@@ -149,6 +149,61 @@ body {
   padding: 0;
 }
 
+.tree-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tree-node {
+  display: flex;
+  flex-direction: column;
+}
+
+.tree-children {
+  display: flex;
+  flex-direction: column;
+}
+
+.tree-folder-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tree-toggle {
+  width: 18px;
+  color: var(--ink-soft);
+}
+
+.tree-folder,
+.tree-note {
+  font-size: 12px;
+  border-radius: 6px;
+  padding: 3px 6px;
+  color: var(--ink-soft);
+}
+
+.tree-folder:hover,
+.tree-note:hover {
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--ink);
+}
+
+.tree-folder.active,
+.tree-folder.all-notes.active {
+  background: #f1ecdf;
+  color: var(--ink);
+}
+
+.tree-count {
+  margin-left: auto;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
 .connection-list {
   list-style: none;
   display: flex;
@@ -317,6 +372,17 @@ body {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-soft);
+}
+
+.note-path {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.note-path-detail {
+  margin-bottom: 4px;
 }
 
 .note-card-summary {

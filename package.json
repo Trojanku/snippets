@@ -8,7 +8,8 @@
     "dev:server": "./run-server.sh watch src/server/index.ts",
     "dev:web": "vite",
     "build": "vite build",
-    "start": "./run-server.sh src/server/index.ts"
+    "start": "./run-server.sh src/server/index.ts",
+    "migrate:folders": "tsx scripts/migrate-notes-to-folders.ts"
   },
   "dependencies": {
     "chokidar": "^4.0.3",

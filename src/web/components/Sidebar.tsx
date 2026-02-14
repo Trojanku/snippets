@@ -1,8 +1,11 @@
+import { useMemo, useState } from "react";
+import type { NotesTreeNode } from "../lib/api.ts";
 import { useApp } from "../App.tsx";
 
 export function Sidebar() {
-  const { state, openNote } = useApp();
-  const { activeNote, connections, notes } = state;
+  const { state, openNote, setSelectedFolder } = useApp();
+  const { activeNote, connections, notes, tree, selectedFolder } = state;
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({ "": true });
 
   const relatedNotes =
     activeNote
@@ -21,17 +24,82 @@ export function Sidebar() {
           .sort((a, b) => b.strength - a.strength)
       : [];
 
-  const allThemes = Array.from(
-    new Set(notes.flatMap((n) => n.themes || []))
-  ).sort();
-
   const actionableCount = notes.filter(
     (n) => n.actionability === "clear" || n.kind === "action"
   ).length;
 
+  const folderCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const note of notes) {
+      const folder = note.folderPath || "";
+      counts.set(folder, (counts.get(folder) || 0) + 1);
+    }
+    return counts;
+  }, [notes]);
+
+  function toggleFolder(path: string) {
+    setExpanded((prev) => ({ ...prev, [path]: !(prev[path] ?? true) }));
+  }
+
+  function renderTreeNode(node: NotesTreeNode, depth = 0) {
+    if (node.type === "folder") {
+      const key = node.path;
+      const isExpanded = expanded[key] ?? depth < 1;
+      const count = folderCounts.get(node.path) || 0;
+
+      return (
+        <div key={`folder:${key}`} className="tree-node" style={{ paddingLeft: `${depth * 12}px` }}>
+          <div className="tree-folder-row">
+            <button
+              className="tree-toggle"
+              onClick={() => toggleFolder(key)}
+              aria-label={isExpanded ? "Collapse folder" : "Expand folder"}
+            >
+              {isExpanded ? "▾" : "▸"}
+            </button>
+            <button
+              className={`tree-folder ${selectedFolder === node.path ? "active" : ""}`}
+              onClick={() => setSelectedFolder(node.path)}
+            >
+              {node.name}
+            </button>
+            <span className="tree-count">{count}</span>
+          </div>
+
+          {isExpanded && node.children.length > 0 && (
+            <div className="tree-children">
+              {node.children.map((child) => renderTreeNode(child, depth + 1))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const noteTitle = node.title || node.id || node.name;
+    return (
+      <div key={`note:${node.path}`} className="tree-node" style={{ paddingLeft: `${depth * 12}px` }}>
+        <button className="tree-note" onClick={() => node.id && openNote(node.id)}>
+          {noteTitle}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <aside className="sidebar">
-      {activeNote ? (
+      <h3>Folders</h3>
+      <button
+        className={`tree-folder all-notes ${selectedFolder === "" ? "active" : ""}`}
+        onClick={() => setSelectedFolder("")}
+      >
+        All notes
+      </button>
+
+      <div className="tree-wrap">
+        {tree ? renderTreeNode(tree, 0) : <p className="muted">Loading tree...</p>}
+      </div>
+
+      {activeNote && (
         <>
           <h3>Connections</h3>
           {relatedNotes.length === 0 ? (
@@ -40,40 +108,11 @@ export function Sidebar() {
             <ul className="connection-list">
               {relatedNotes.map((r) => (
                 <li key={r.otherId}>
-                  <button onClick={() => openNote(r.otherId)}>
-                    {r.otherTitle}
-                  </button>
+                  <button onClick={() => openNote(r.otherId)}>{r.otherTitle}</button>
                   <span className="muted">{r.reason}</span>
                 </li>
               ))}
             </ul>
-          )}
-
-          {activeNote.frontmatter.suggestedActions &&
-            activeNote.frontmatter.suggestedActions.length > 0 && (
-              <>
-                <h3>Actions</h3>
-                <ul>
-                  {activeNote.frontmatter.suggestedActions.map((a, i) => (
-                    <li key={i} className="action-item">
-                      {a.label}
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-        </>
-      ) : (
-        <>
-          <h3>Themes</h3>
-          {allThemes.length === 0 ? (
-            <p className="muted">No themes yet</p>
-          ) : (
-            <div className="tags">
-              {allThemes.map((t) => (
-                <span key={t} className="tag">{t}</span>
-              ))}
-            </div>
           )}
         </>
       )}

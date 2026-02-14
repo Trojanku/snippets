@@ -27,6 +27,7 @@ export function NoteView() {
   return (
     <div className="note-view">
       <h1>{fm.title || fm.id}</h1>
+      {fm.folderPath && <div className="note-path note-path-detail">{fm.folderPath}</div>}
       <div className="note-meta">
         <span>{new Date(fm.created).toLocaleString()}</span>
         {fm.status && (

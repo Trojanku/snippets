@@ -10,6 +10,7 @@ import type {
   NoteSummary,
   FullNote,
   ConnectionGraph,
+  NotesTreeFolderNode,
 } from "./lib/api.ts";
 import { Capture } from "./components/Capture.tsx";
 import { NoteList } from "./components/NoteList.tsx";
@@ -23,6 +24,8 @@ interface AppState {
   notes: NoteSummary[];
   activeNote: FullNote | null;
   connections: ConnectionGraph;
+  tree: NotesTreeFolderNode | null;
+  selectedFolder: string; // "" means all
   memory: string;
   mission: string;
   view: View;
@@ -32,6 +35,8 @@ type Action =
   | { type: "SET_NOTES"; notes: NoteSummary[] }
   | { type: "SET_ACTIVE_NOTE"; note: FullNote | null }
   | { type: "SET_CONNECTIONS"; connections: ConnectionGraph }
+  | { type: "SET_TREE"; tree: NotesTreeFolderNode | null }
+  | { type: "SET_SELECTED_FOLDER"; folderPath: string }
   | { type: "SET_MEMORY"; content: string }
   | { type: "SET_MISSION"; content: string }
   | { type: "SET_VIEW"; view: View };
@@ -44,6 +49,10 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, activeNote: action.note };
     case "SET_CONNECTIONS":
       return { ...state, connections: action.connections };
+    case "SET_TREE":
+      return { ...state, tree: action.tree };
+    case "SET_SELECTED_FOLDER":
+      return { ...state, selectedFolder: action.folderPath };
     case "SET_MEMORY":
       return { ...state, memory: action.content };
     case "SET_MISSION":
@@ -59,6 +68,8 @@ const initial: AppState = {
   notes: [],
   activeNote: null,
   connections: { version: 1, edges: [] },
+  tree: null,
+  selectedFolder: "",
   memory: "",
   mission: "",
   view: "capture",
@@ -69,6 +80,7 @@ interface AppContextValue {
   dispatch: React.Dispatch<Action>;
   openNote: (id: string) => void;
   refresh: () => void;
+  setSelectedFolder: (folderPath: string) => void;
 }
 
 const AppContext = createContext<AppContextValue>(null!);
@@ -80,6 +92,7 @@ export function App() {
   const refresh = useCallback(() => {
     api.listNotes().then((notes) => dispatch({ type: "SET_NOTES", notes }));
     api.getConnections().then((c) => dispatch({ type: "SET_CONNECTIONS", connections: c }));
+    api.getTree().then((tree) => dispatch({ type: "SET_TREE", tree }));
     api.getMemory().then((m) => dispatch({ type: "SET_MEMORY", content: m.content }));
     api.getMission().then((m) => dispatch({ type: "SET_MISSION", content: m.content }));
   }, []);
@@ -94,11 +107,16 @@ export function App() {
     []
   );
 
+  const setSelectedFolder = useCallback((folderPath: string) => {
+    dispatch({ type: "SET_SELECTED_FOLDER", folderPath });
+  }, []);
+
   useEffect(() => {
     refresh();
     const unsub = subscribeSSE((event) => {
       if (event === "notes-updated") {
         api.listNotes().then((notes) => dispatch({ type: "SET_NOTES", notes }));
+        api.getTree().then((tree) => dispatch({ type: "SET_TREE", tree }));
         if (state.activeNote) {
           api.getNote(state.activeNote.frontmatter.id).then((note) =>
             dispatch({ type: "SET_ACTIVE_NOTE", note })
@@ -115,7 +133,7 @@ export function App() {
     return unsub;
   }, []);
 
-  const ctx: AppContextValue = { state, dispatch, openNote, refresh };
+  const ctx: AppContextValue = { state, dispatch, openNote, refresh, setSelectedFolder };
 
   return (
     <AppContext value={ctx}>

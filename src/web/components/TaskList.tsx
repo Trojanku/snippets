@@ -1,13 +1,23 @@
+import { useMemo } from "react";
 import { useApp } from "../App.tsx";
+
+function inSelectedFolder(noteFolderPath: string | undefined, selectedFolder: string): boolean {
+  const folder = noteFolderPath || "";
+  if (!selectedFolder) return true;
+  return folder === selectedFolder || folder.startsWith(`${selectedFolder}/`);
+}
 
 export function TaskList() {
   const { state, openNote } = useApp();
 
-  const taskNotes = state.notes.filter((n) => {
-    const clearActionability = n.actionability === "clear";
-    const hasActionItems = (n.suggestedActions || []).some((a) => a.type === "create-task");
-    return clearActionability || hasActionItems || n.kind === "action";
-  });
+  const taskNotes = useMemo(() => {
+    return state.notes.filter((n) => {
+      if (!inSelectedFolder(n.folderPath, state.selectedFolder)) return false;
+      const clearActionability = n.actionability === "clear";
+      const hasActionItems = (n.suggestedActions || []).some((a) => a.type === "create-task");
+      return clearActionability || hasActionItems || n.kind === "action";
+    });
+  }, [state.notes, state.selectedFolder]);
 
   if (taskNotes.length === 0) {
     return (
@@ -19,16 +29,18 @@ export function TaskList() {
   }
 
   return (
-    <section className="task-list">
-      <div className="note-card-date">Agenda · {taskNotes.length} actionable notes</div>
-      <div className="note-list">
+    <div className="note-list agenda-list">
+      <div className="note-card agenda-header">
+        <div className="note-card-title">Action Agenda</div>
+        <div className="note-card-date">{taskNotes.length} actionable notes</div>
+      </div>
+
       {taskNotes.map((n) => (
-        <button key={n.id} className="note-card" onClick={() => openNote(n.id)}>
+        <button key={n.id} className="note-card agenda-item" onClick={() => openNote(n.id)}>
           <div className="note-card-title">{n.title || n.id}</div>
-          <div className="note-card-date">{new Date(n.created).toLocaleString()}</div>
           {n.summary && <div className="note-card-summary">{n.summary}</div>}
+          {n.folderPath && <div className="note-path">{n.folderPath}</div>}
           <div className="badges-row">
-            <span className="badge badge-kind">{n.kind || "unknown"}</span>
             <span className={`badge badge-actionability action-${n.actionability || "none"}`}>
               {n.actionability || "none"}
             </span>
@@ -36,7 +48,6 @@ export function TaskList() {
           </div>
         </button>
       ))}
-      </div>
-    </section>
+    </div>
   );
 }

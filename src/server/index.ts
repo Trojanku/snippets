@@ -12,6 +12,9 @@ import {
   getMemory,
   getMission,
   setNoteStatus,
+  getNotesTree,
+  moveNoteToFolder,
+  ensureNoteFolders,
 } from "./store.js";
 
 const PENDING_DIR = path.resolve(".agent/pending");
@@ -36,7 +39,7 @@ async function triggerAgent(noteId: string): Promise<{ ok: boolean; error?: stri
       },
       body: JSON.stringify({
         name: "Snippets",
-        message: `Process Snippets pending queue now. Newly created note id: ${noteId}. Use snippets-ai workflow: read /api/pending, process each note, update frontmatter, then DELETE /api/pending/<id>.`,
+        message: `Process Snippets pending queue now. Newly created note id: ${noteId}. Use snippets-ai workflow: read /api/pending, process each note, classify + set folderPath, move with /api/notes/<id>/move, update frontmatter, then DELETE /api/pending/<id>.`,
         model: "openai-codex/gpt-5.3-codex",
         wakeMode: "now",
         deliver: false
@@ -102,6 +105,10 @@ app.get("/api/notes/:id", (req, res) => {
   res.json(note);
 });
 
+app.get("/api/tree", (_req, res) => {
+  res.json(getNotesTree());
+});
+
 app.post("/api/notes", async (req, res) => {
   const { content } = req.body;
   if (!content || typeof content !== "string") {
@@ -154,6 +161,18 @@ app.post("/api/notes/:id/retry", async (req, res) => {
   res.json({ ok: true });
 });
 
+app.post("/api/notes/:id/move", (req, res) => {
+  const id = req.params.id;
+  const folderPath = typeof req.body?.folderPath === "string" ? req.body.folderPath : "";
+
+  const moved = moveNoteToFolder(id, folderPath);
+  if (!moved) {
+    return res.status(400).json({ error: "Invalid folderPath or note not found" });
+  }
+
+  res.json({ ok: true, note: moved });
+});
+
 app.post("/api/pending/:id/start", (req, res) => {
   const id = req.params.id;
   setNoteStatus(id, "processing");
@@ -188,7 +207,7 @@ app.get("/api/mission", (_req, res) => {
 // --- Chokidar Watcher ---
 
 // Ensure directories exist
-fs.mkdirSync(path.resolve("notes"), { recursive: true });
+ensureNoteFolders();
 fs.mkdirSync(PENDING_DIR, { recursive: true });
 
 const watcher = watch(

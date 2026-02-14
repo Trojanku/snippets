@@ -20,6 +20,23 @@ Default to **conservative** behavior:
 - If unclear, use `kind: knowledge`, `actionability: none`
 - Do **not** create tasks unless intent is explicit
 
+## Folder routing is required
+
+Snippets is folder-first. Route each processed note into a canonical folder:
+- `knowledge/*` for factual/product context
+- `actions/*` for clear actionable commitments
+- `ideas/*` for exploratory concepts
+- `journal/*` for personal/reflection/log style notes
+- `reference/*` for docs/resources/snippets used as lookup
+
+Use `folderPath` in frontmatter and move the file with API:
+
+```bash
+curl -s -X POST http://localhost:3811/api/notes/<id>/move \
+  -H 'Content-Type: application/json' \
+  -d '{"folderPath":"knowledge/openclaw"}'
+```
+
 ## Task extraction guardrails
 
 Create actionable suggestions only when explicit intent exists, e.g.:
@@ -43,9 +60,11 @@ curl -s -X DELETE http://localhost:3811/api/pending/<id>
 For each pending note ID:
 1. `POST /api/pending/<id>/start` (sets `status: processing`)
 2. Read note
-3. Enrich frontmatter
-4. Update graph connections
-5. `DELETE /api/pending/<id>` (sets `status: processed` + removes queue entry)
+3. Classify + choose destination folderPath
+4. Enrich frontmatter
+5. Move note to folder (`POST /api/notes/<id>/move`)
+6. Update graph connections
+7. `DELETE /api/pending/<id>` (sets `status: processed` + removes queue entry)
 
 ## Frontmatter schema
 
@@ -56,6 +75,7 @@ id: "..."
 created: "..."
 updated: "..."
 status: processed
+folderPath: "knowledge/openclaw"
 kind: knowledge
 actionability: none
 classificationConfidence: 0.92

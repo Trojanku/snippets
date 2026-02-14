@@ -1,34 +1,44 @@
 import { useMemo, useState } from "react";
 import { useApp } from "../App.tsx";
 
+function inSelectedFolder(noteFolderPath: string | undefined, selectedFolder: string): boolean {
+  const folder = noteFolderPath || "";
+  if (!selectedFolder) return true;
+  return folder === selectedFolder || folder.startsWith(`${selectedFolder}/`);
+}
+
 export function NoteList() {
   const { state, openNote } = useApp();
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState("all");
   const [theme, setTheme] = useState("all");
 
+  const scopedNotes = useMemo(
+    () => state.notes.filter((n) => inSelectedFolder(n.folderPath, state.selectedFolder)),
+    [state.notes, state.selectedFolder]
+  );
+
   const allThemes = useMemo(
-    () => Array.from(new Set(state.notes.flatMap((n) => n.themes || []))).sort(),
-    [state.notes]
+    () => Array.from(new Set(scopedNotes.flatMap((n) => n.themes || []))).sort(),
+    [scopedNotes]
   );
 
   const filtered = useMemo(() => {
-    return state.notes.filter((n) => {
+    return scopedNotes.filter((n) => {
       const matchesKind = kind === "all" || (n.kind || "unknown") === kind;
       const matchesTheme = theme === "all" || (n.themes || []).includes(theme);
-      const hay = `${n.title || ""} ${n.summary || ""} ${(n.themes || []).join(" ")}`.toLowerCase();
+      const hay = `${n.title || ""} ${n.summary || ""} ${(n.themes || []).join(" ")} ${n.folderPath || ""}`.toLowerCase();
       const matchesQuery = !query.trim() || hay.includes(query.toLowerCase());
       return matchesKind && matchesTheme && matchesQuery;
     });
-  }, [state.notes, kind, theme, query]);
+  }, [scopedNotes, kind, theme, query]);
 
   if (state.notes.length === 0) {
     return <div className="empty">No notes yet. Capture something!</div>;
   }
 
   return (
-    <section>
-      <div className="note-card-date">Notes stream · {filtered.length} shown</div>
+    <>
       <div className="filters">
         <input
           className="filter-input"
@@ -60,6 +70,7 @@ export function NoteList() {
           <button key={n.id} className="note-card" onClick={() => openNote(n.id)}>
             <div className="note-card-title">{n.title || n.id}</div>
             <div className="note-card-date">{new Date(n.created).toLocaleDateString()}</div>
+            {n.folderPath && <div className="note-path">{n.folderPath}</div>}
             {n.summary && <div className="note-card-summary">{n.summary}</div>}
             {n.themes && n.themes.length > 0 && (
               <div className="tags">
@@ -80,6 +91,6 @@ export function NoteList() {
           </button>
         ))}
       </div>
-    </section>
+    </>
   );
 }
