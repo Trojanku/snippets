@@ -12,6 +12,7 @@ import {
   getMemory,
   getMission,
   setNoteStatus,
+  markNoteSeen,
   getNotesTree,
   moveNoteToFolder,
   ensureNoteFolders,
@@ -103,6 +104,14 @@ app.get("/api/notes/:id", (req, res) => {
   const note = getNote(req.params.id);
   if (!note) return res.status(404).json({ error: "Note not found" });
   res.json(note);
+});
+
+app.post("/api/notes/:id/seen", (req, res) => {
+  const id = req.params.id;
+  const note = getNote(id);
+  if (!note) return res.status(404).json({ error: "Note not found" });
+  markNoteSeen(id);
+  res.json({ ok: true });
 });
 
 app.get("/api/tree", (_req, res) => {

@@ -15,6 +15,8 @@ export interface NoteSummary {
   classificationConfidence?: number;
   processingError?: string;
   folderPath?: string;
+  processedAt?: string;
+  seenAt?: string;
 }
 
 export interface FullNote {
@@ -65,6 +67,14 @@ async function json<T>(url: string): Promise<T> {
 export const api = {
   listNotes: () => json<NoteSummary[]>("/notes"),
   getNote: (id: string) => json<FullNote>(`/notes/${encodeURIComponent(id)}`),
+  markSeen: async (id: string): Promise<{ ok: boolean; error?: string }> => {
+    const res = await fetch(`${BASE}/notes/${encodeURIComponent(id)}/seen`, {
+      method: "POST",
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { ok: false, error: body?.error || `API error: ${res.status}` };
+    return body;
+  },
   getTree: () => json<NotesTreeFolderNode>("/tree"),
   createNote: async (content: string): Promise<FullNote> => {
     const res = await fetch(`${BASE}/notes`, {

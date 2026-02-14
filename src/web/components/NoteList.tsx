@@ -7,6 +7,13 @@ function inSelectedFolder(noteFolderPath: string | undefined, selectedFolder: st
   return folder === selectedFolder || folder.startsWith(`${selectedFolder}/`);
 }
 
+function isReadyToRead(n: { status?: string; processedAt?: string; seenAt?: string }): boolean {
+  if (n.status !== "processed") return false;
+  if (!n.processedAt) return !n.seenAt;
+  if (!n.seenAt) return true;
+  return new Date(n.processedAt).getTime() > new Date(n.seenAt).getTime();
+}
+
 export function NoteList() {
   const { state, openNote } = useApp();
   const [query, setQuery] = useState("");
@@ -70,6 +77,7 @@ export function NoteList() {
           <button key={n.id} className="note-card" onClick={() => openNote(n.id)}>
             <div className="note-card-title">{n.title || n.id}</div>
             <div className="note-card-date">{new Date(n.created).toLocaleDateString()}</div>
+            {isReadyToRead(n) && <span className="ready-pill">Ready to read</span>}
             {n.folderPath && <div className="note-path">{n.folderPath}</div>}
             {n.summary && <div className="note-card-summary">{n.summary}</div>}
             {n.themes && n.themes.length > 0 && (

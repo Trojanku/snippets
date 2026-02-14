@@ -32,6 +32,8 @@ export interface NoteFrontmatter {
   classificationConfidence?: number;
   processingError?: string;
   folderPath?: string;
+  processedAt?: string;
+  seenAt?: string;
 }
 
 export interface Note {
@@ -293,7 +295,12 @@ export function setNoteStatus(
 ): Note | null {
   const patch: Partial<NoteFrontmatter> = { status };
   if (processingError !== undefined) patch.processingError = processingError;
+  if (status === "processed") patch.processedAt = new Date().toISOString();
   return patchNoteFrontmatter(id, patch);
+}
+
+export function markNoteSeen(id: string): Note | null {
+  return patchNoteFrontmatter(id, { seenAt: new Date().toISOString() });
 }
 
 function buildTree(absDir: string, relDir: string): NotesTreeFolderNode {

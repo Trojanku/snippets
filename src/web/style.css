@@ -85,6 +85,16 @@ body {
   color: #324238;
 }
 
+.nav-badge {
+  margin-left: 8px;
+  font-size: 10px;
+  border-radius: 999px;
+  padding: 2px 7px;
+  border: 1px solid #c8dcc8;
+  background: #eef5ee;
+  color: #365b39;
+}
+
 .nav-links button:focus-visible,
 .capture-btn:focus-visible,
 .note-card:focus-visible,
@@ -372,6 +382,18 @@ body {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-soft);
+}
+
+.ready-pill {
+  align-self: flex-start;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid #c8dcc8;
+  background: #eef5ee;
+  color: #365b39;
+  border-radius: 999px;
+  padding: 2px 8px;
 }
 
 .note-path {

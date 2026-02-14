@@ -99,9 +99,15 @@ export function App() {
 
   const openNote = useCallback(
     (id: string) => {
-      api.getNote(id).then((note) => {
+      api.getNote(id).then(async (note) => {
         dispatch({ type: "SET_ACTIVE_NOTE", note });
         dispatch({ type: "SET_VIEW", view: "note" });
+
+        const fm = note.frontmatter;
+        if (fm.status === "processed") {
+          await api.markSeen(id);
+          api.listNotes().then((notes) => dispatch({ type: "SET_NOTES", notes }));
+        }
       });
     },
     []
@@ -110,6 +116,13 @@ export function App() {
   const setSelectedFolder = useCallback((folderPath: string) => {
     dispatch({ type: "SET_SELECTED_FOLDER", folderPath });
   }, []);
+
+  const readyToReadCount = state.notes.filter((n) => {
+    if (n.status !== "processed") return false;
+    if (!n.processedAt) return !n.seenAt;
+    if (!n.seenAt) return true;
+    return new Date(n.processedAt).getTime() > new Date(n.seenAt).getTime();
+  }).length;
 
   useEffect(() => {
     refresh();
@@ -152,6 +165,7 @@ export function App() {
               onClick={() => dispatch({ type: "SET_VIEW", view: "list" })}
             >
               Notes
+              {readyToReadCount > 0 && <span className="nav-badge">{readyToReadCount}</span>}
             </button>
             <button
               className={state.view === "tasks" ? "active" : ""}
