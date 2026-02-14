@@ -126,16 +126,41 @@ export const api = {
   getMemory: () => json<{ content: string }>("/memory"),
   getMission: () => json<{ content: string }>("/mission"),
   getUserActions: () => json("/user-actions"),
-  completeAction: (noteId: string, actionIndex: number, result?: string) =>
-    json(`/user-actions/${encodeURIComponent(noteId)}/${actionIndex}/complete`, "POST", { result }),
-  declineAction: (noteId: string, actionIndex: number) =>
-    json(`/user-actions/${encodeURIComponent(noteId)}/${actionIndex}/decline`, "POST"),
-  runAgentAction: (noteId: string, actionIndex: number) =>
-    json(`/agent-actions/${encodeURIComponent(noteId)}/${actionIndex}/run`, "POST"),
-  checkAgentActionStatus: (noteId: string, actionIndex: number) =>
-    json(`/agent-actions/${encodeURIComponent(noteId)}/${actionIndex}/status`, "GET"),
-  deleteNote: (id: string) =>
-    json(`/notes/${encodeURIComponent(id)}`, "DELETE"),
+  completeAction: async (noteId: string, actionIndex: number, result?: string) => {
+    const res = await fetch(`${BASE}/user-actions/${encodeURIComponent(noteId)}/${actionIndex}/complete`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ result }),
+    });
+    if (!res.ok) throw new Error(`Failed to complete action: ${res.status}`);
+    return res.json();
+  },
+  declineAction: async (noteId: string, actionIndex: number) => {
+    const res = await fetch(`${BASE}/user-actions/${encodeURIComponent(noteId)}/${actionIndex}/decline`, {
+      method: "POST",
+    });
+    if (!res.ok) throw new Error(`Failed to decline action: ${res.status}`);
+    return res.json();
+  },
+  runAgentAction: async (noteId: string, actionIndex: number) => {
+    const res = await fetch(`${BASE}/agent-actions/${encodeURIComponent(noteId)}/${actionIndex}/run`, {
+      method: "POST",
+    });
+    if (!res.ok) throw new Error(`Failed to run action: ${res.status}`);
+    return res.json();
+  },
+  checkAgentActionStatus: async (noteId: string, actionIndex: number) => {
+    const res = await fetch(`${BASE}/agent-actions/${encodeURIComponent(noteId)}/${actionIndex}/status`);
+    if (!res.ok) throw new Error(`Failed to check action status: ${res.status}`);
+    return res.json();
+  },
+  deleteNote: async (id: string): Promise<{ ok: boolean }> => {
+    const res = await fetch(`${BASE}/notes/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error(`Failed to delete note: ${res.status}`);
+    return res.json();
+  },
 };
 
 export type SSEHandler = (event: string, data: string) => void;
