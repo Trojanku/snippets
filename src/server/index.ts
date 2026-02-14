@@ -15,6 +15,43 @@ import {
 
 const PENDING_DIR = path.resolve(".agent/pending");
 
+// OpenClaw integration
+const OPENCLAW_GATEWAY_URL = process.env.OPENCLAW_GATEWAY_URL || "http://localhost:18789";
+const OPENCLAW_HOOKS_TOKEN = process.env.OPENCLAW_HOOKS_TOKEN || "snippets-hook-secret-2026";
+
+async function triggerAgent(noteId: string) {
+  if (!OPENCLAW_HOOKS_TOKEN) {
+    console.log("[openclaw] No hooks token configured, skipping trigger");
+    return;
+  }
+
+  try {
+    const response = await fetch(`${OPENCLAW_GATEWAY_URL}/hooks/agent`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${OPENCLAW_HOOKS_TOKEN}`,
+      },
+      body: JSON.stringify({
+        name: "Snippets",
+        message: `Process Snippets pending queue now. Newly created note id: ${noteId}. Use snippets-ai workflow: read /api/pending, process each note, update frontmatter, then DELETE /api/pending/<id>.`,
+        model: "openai-codex/gpt-5.3-codex",
+        wakeMode: "now",
+        deliver: false
+      }),
+    });
+
+    if (response.ok || response.status === 202) {
+      console.log(`[openclaw] Triggered agent for note ${noteId}`);
+    } else {
+      const body = await response.text();
+      console.log(`[openclaw] Failed to trigger: ${response.status} ${body}`);
+    }
+  } catch (err) {
+    console.log(`[openclaw] Trigger error: ${err}`);
+  }
+}
+
 const app = express();
 const PORT = 3811;
 
@@ -58,7 +95,7 @@ app.get("/api/notes/:id", (req, res) => {
   res.json(note);
 });
 
-app.post("/api/notes", (req, res) => {
+app.post("/api/notes", async (req, res) => {
   const { content } = req.body;
   if (!content || typeof content !== "string") {
     return res.status(400).json({ error: "content is required" });
@@ -69,6 +106,9 @@ app.post("/api/notes", (req, res) => {
   fs.mkdirSync(PENDING_DIR, { recursive: true });
   fs.writeFileSync(path.join(PENDING_DIR, note.frontmatter.id), "");
   console.log(`[queue] Note ${note.frontmatter.id} queued for processing`);
+  
+  // Trigger OpenClaw agent immediately
+  triggerAgent(note.frontmatter.id);
   
   res.status(201).json(note);
 });

@@ -4,11 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "concurrently -n server,web -c blue,green \"tsx watch src/server/index.ts\" \"vite\"",
-    "dev:server": "tsx watch src/server/index.ts",
+    "dev": "concurrently -n server,web -c blue,green \"./run-server.sh watch src/server/index.ts\" \"vite\"",
+    "dev:server": "./run-server.sh watch src/server/index.ts",
     "dev:web": "vite",
     "build": "vite build",
-    "start": "tsx src/server/index.ts"
+    "start": "./run-server.sh src/server/index.ts"
   },
   "dependencies": {
     "chokidar": "^4.0.3",
