@@ -36,7 +36,7 @@ export function TaskList() {
       </div>
 
       {taskNotes.map((n) => (
-        <button key={n.id} className="note-card agenda-item" onClick={() => openNote(n.id)}>
+        <button key={n.id} className="note-card agenda-item" onClick={() => void openNote(n.id)}>
           <div className="note-card-title">{n.title || n.id}</div>
           {n.summary && <div className="note-card-summary">{n.summary}</div>}
           {n.folderPath && <div className="note-path">{n.folderPath}</div>}

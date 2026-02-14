@@ -74,7 +74,7 @@ export function NoteList() {
 
       <div className="note-list">
         {filtered.map((n) => (
-          <button key={n.id} className="note-card" onClick={() => openNote(n.id)}>
+          <button key={n.id} className="note-card" onClick={() => void openNote(n.id)}>
             <div className="note-card-title">{n.title || n.id}</div>
             <div className="note-card-date">{new Date(n.created).toLocaleDateString()}</div>
             {isReadyToRead(n) && <span className="ready-pill">Ready to read</span>}

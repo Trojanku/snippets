@@ -89,26 +89,33 @@ export const useApp = () => useContext(AppContext);
 export function App() {
   const [state, dispatch] = useReducer(reducer, initial);
 
-  const refresh = useCallback(() => {
-    api.listNotes().then((notes) => dispatch({ type: "SET_NOTES", notes }));
-    api.getConnections().then((c) => dispatch({ type: "SET_CONNECTIONS", connections: c }));
-    api.getTree().then((tree) => dispatch({ type: "SET_TREE", tree }));
-    api.getMemory().then((m) => dispatch({ type: "SET_MEMORY", content: m.content }));
-    api.getMission().then((m) => dispatch({ type: "SET_MISSION", content: m.content }));
+  const refresh = useCallback(async () => {
+    const [notes, connections, tree, memory, mission] = await Promise.all([
+      api.listNotes(),
+      api.getConnections(),
+      api.getTree(),
+      api.getMemory(),
+      api.getMission(),
+    ]);
+    dispatch({ type: "SET_NOTES", notes });
+    dispatch({ type: "SET_CONNECTIONS", connections });
+    dispatch({ type: "SET_TREE", tree });
+    dispatch({ type: "SET_MEMORY", content: memory.content });
+    dispatch({ type: "SET_MISSION", content: mission.content });
   }, []);
 
   const openNote = useCallback(
-    (id: string) => {
-      api.getNote(id).then(async (note) => {
-        dispatch({ type: "SET_ACTIVE_NOTE", note });
-        dispatch({ type: "SET_VIEW", view: "note" });
+    async (id: string) => {
+      const note = await api.getNote(id);
+      dispatch({ type: "SET_ACTIVE_NOTE", note });
+      dispatch({ type: "SET_VIEW", view: "note" });
 
-        const fm = note.frontmatter;
-        if (fm.status === "processed") {
-          await api.markSeen(id);
-          api.listNotes().then((notes) => dispatch({ type: "SET_NOTES", notes }));
-        }
-      });
+      const fm = note.frontmatter;
+      if (fm.status === "processed" && !fm.seenAt) {
+        await api.markSeen(id);
+        const notes = await api.listNotes();
+        dispatch({ type: "SET_NOTES", notes });
+      }
     },
     []
   );

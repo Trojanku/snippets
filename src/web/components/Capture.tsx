@@ -14,7 +14,7 @@ export function Capture() {
     try {
       const note = await api.createNote(content.trim());
       setContent("");
-      openNote(note.frontmatter.id);
+      await openNote(note.frontmatter.id);
     } finally {
       setSaving(false);
     }

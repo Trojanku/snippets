@@ -120,7 +120,7 @@ export function Sidebar() {
             <ul className="connection-list">
               {relatedNotes.map((r) => (
                 <li key={r.otherId}>
-                  <button onClick={() => openNote(r.otherId)}>{r.otherTitle}</button>
+                  <button onClick={() => void openNote(r.otherId)}>{r.otherTitle}</button>
                   <span className="muted">{r.reason}</span>
                 </li>
               ))}

@@ -43,9 +43,9 @@ export function NoteView() {
     try {
       const updated = await api.saveNote(fm.id, editedContent);
       if (updated) {
-        await refresh();
-        openNote(fm.id);
         setIsEditing(false);
+        await refresh();
+        await openNote(fm.id);
       }
     } finally {
       setIsSaving(false);
