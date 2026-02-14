@@ -17,6 +17,7 @@ export function NoteView() {
   const [editedContent, setEditedContent] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
   const [actionEditing, setActionEditing] = useState<ActionEditState | null>(null);
+  const [runningJobId, setRunningJobId] = useState<string | null>(null);
 
   if (!note) return null;
 
@@ -74,6 +75,23 @@ export function NoteView() {
     await api.declineAction(fm.id, actionIndex);
     await refresh();
     await openNote(fm.id);
+  }
+
+  async function handleRunAction(actionIndex: number) {
+    const result = await api.runAgentAction(fm.id, actionIndex);
+    if (result?.jobId) {
+      setRunningJobId(result.jobId);
+      // Start polling for status
+      const pollInterval = setInterval(async () => {
+        const status = await api.checkAgentActionStatus(fm.id, actionIndex);
+        if (status?.status === "completed" || status?.status === "failed") {
+          clearInterval(pollInterval);
+          await refresh();
+          await openNote(fm.id);
+          setRunningJobId(null);
+        }
+      }, 1000);
+    }
   }
 
   return (
@@ -169,6 +187,9 @@ export function NoteView() {
                     {isPriority && <span className="action-priority">High</span>}
                   </div>
                   <p className="action-label">{a.label}</p>
+                  {a.jobStatus === "running" && (
+                    <p className="action-running">⏳ Running... started {new Date(a.jobStartedAt || "").toLocaleTimeString()}</p>
+                  )}
                   {a.result && <p className="action-result">✓ {a.result}</p>}
                   {actionEditing?.actionIndex === i ? (
                     <div className="action-edit">
@@ -199,9 +220,18 @@ export function NoteView() {
                     </div>
                   ) : (
                     <div className="action-controls">
-                      {isAgent && !isCompleted && (
-                        <button className="action-run-btn" title="Run this action">
+                      {isAgent && !isCompleted && !a.jobStatus && (
+                        <button
+                          className="action-run-btn"
+                          title="Run this action"
+                          onClick={() => handleRunAction(i)}
+                        >
                           Run →
+                        </button>
+                      )}
+                      {a.jobStatus === "running" && (
+                        <button className="action-run-btn running" disabled>
+                          Running...
                         </button>
                       )}
                       {!isCompleted && (

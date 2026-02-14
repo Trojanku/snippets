@@ -861,6 +861,19 @@ body {
   margin-top: 6px;
 }
 
+.action-running {
+  font-size: 12px;
+  color: #6f8572;
+  font-style: italic;
+  margin: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 .action-result {
   font-size: 13px;
   color: #365b39;
@@ -921,6 +934,13 @@ body {
   background: #3d5143;
   color: #f6f8f5;
   border-color: #2f4335;
+}
+
+.action-run-btn.running {
+  background: #f3f7f4;
+  color: #6f8572;
+  border-color: #c8dcc8;
+  cursor: wait;
 }
 
 .action-done-btn:hover,

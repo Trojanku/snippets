@@ -15,6 +15,9 @@ export interface NoteSummary {
     priority?: "low" | "medium" | "high";
     status?: "pending" | "completed" | "declined";
     result?: string;
+    jobId?: string;
+    jobStatus?: "running" | "completed" | "failed";
+    jobStartedAt?: string;
   }[];
   status?: string;
   kind?: "knowledge" | "action" | "idea" | "journal" | "reference" | string;
@@ -127,6 +130,10 @@ export const api = {
     json(`/user-actions/${encodeURIComponent(noteId)}/${actionIndex}/complete`, "POST", { result }),
   declineAction: (noteId: string, actionIndex: number) =>
     json(`/user-actions/${encodeURIComponent(noteId)}/${actionIndex}/decline`, "POST"),
+  runAgentAction: (noteId: string, actionIndex: number) =>
+    json(`/agent-actions/${encodeURIComponent(noteId)}/${actionIndex}/run`, "POST"),
+  checkAgentActionStatus: (noteId: string, actionIndex: number) =>
+    json(`/agent-actions/${encodeURIComponent(noteId)}/${actionIndex}/status`, "GET"),
 };
 
 export type SSEHandler = (event: string, data: string) => void;

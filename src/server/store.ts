@@ -33,6 +33,9 @@ export interface NoteFrontmatter {
     priority?: "low" | "medium" | "high";
     status?: "pending" | "completed" | "declined";
     result?: string;
+    jobId?: string;
+    jobStatus?: "running" | "completed" | "failed";
+    jobStartedAt?: string;
   }[];
   status?: "raw" | "queued" | "processing" | "processed" | "failed" | string;
   kind?: "knowledge" | "action" | "idea" | "journal" | "reference" | string;

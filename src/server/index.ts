@@ -17,6 +17,7 @@ import {
   getNotesTree,
   moveNoteToFolder,
   ensureNoteFolders,
+  patchNoteFrontmatter,
 } from "./store.js";
 
 const PENDING_DIR = path.resolve(".agent/pending");
@@ -286,6 +287,138 @@ app.post("/api/user-actions/:noteId/:actionIndex/decline", (req, res) => {
   broadcast("notes-updated");
   res.json({ ok: true, action: actions[idx] });
 });
+
+// In-memory job tracking
+interface AgentJob {
+  id: string;
+  status: "running" | "completed" | "failed";
+  result?: string;
+  startedAt: string;
+  completedAt?: string;
+}
+const agentJobs = new Map<string, AgentJob>();
+
+app.post("/api/agent-actions/:noteId/:actionIndex/run", async (req, res) => {
+  const { noteId, actionIndex } = req.params;
+  const note = getNote(noteId);
+  if (!note) return res.status(404).json({ error: "Note not found" });
+
+  const actions = note.frontmatter.suggestedActions || [];
+  const idx = parseInt(actionIndex, 10);
+  if (idx < 0 || idx >= actions.length) {
+    return res.status(400).json({ error: "Action index out of range" });
+  }
+
+  const action = actions[idx];
+  if (action.assignee !== "agent") {
+    return res.status(400).json({ error: "Only agent actions can be run" });
+  }
+
+  const jobId = `job-${noteId}-${idx}-${Date.now()}`;
+  const job: AgentJob = {
+    id: jobId,
+    status: "running",
+    startedAt: new Date().toISOString(),
+  };
+
+  agentJobs.set(jobId, job);
+
+  // Update action with job tracking
+  actions[idx].jobId = jobId;
+  actions[idx].jobStatus = "running";
+  actions[idx].jobStartedAt = job.startedAt;
+  patchNoteFrontmatter(noteId, { suggestedActions: actions });
+  broadcast("notes-updated");
+
+  // Spawn background task
+  const taskLabel = action.label || action.type;
+  const taskDescription = `Execute action for note ${noteId}: "${taskLabel}". Return the result/outcome concisely.`;
+
+  // Fire and forget - update job status in background
+  (async () => {
+    try {
+      const response = await fetch(`${OPENCLAW_GATEWAY_URL}/cron`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${OPENCLAW_HOOKS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          action: "run",
+          job: {
+            name: `snippets-action-${idx}`,
+            schedule: { kind: "at", at: new Date().toISOString() },
+            payload: {
+              kind: "agentTurn",
+              message: taskDescription,
+              timeoutSeconds: 60,
+            },
+            sessionTarget: "isolated",
+          },
+        }),
+      });
+
+      if (response.ok) {
+        console.log(`[agent] Started job ${jobId} for action: ${taskLabel}`);
+      } else {
+        const err = await response.text();
+        console.error(`[agent] Failed to schedule job: ${err}`);
+        job.status = "failed";
+        job.result = "Failed to start: gateway error";
+        job.completedAt = new Date().toISOString();
+        updateActionJobStatus(noteId, idx, job);
+      }
+    } catch (err) {
+      console.error(`[agent] Error spawning task for ${jobId}:`, err);
+      job.status = "failed";
+      job.result = `Error: ${String(err)}`;
+      job.completedAt = new Date().toISOString();
+      updateActionJobStatus(noteId, idx, job);
+    }
+  })();
+
+  res.json({ ok: true, jobId, status: "running" });
+});
+
+app.get("/api/agent-actions/:noteId/:actionIndex/status", (_req, res) => {
+  const { noteId, actionIndex } = _req.params;
+  const note = getNote(noteId);
+  if (!note) return res.status(404).json({ error: "Note not found" });
+
+  const actions = note.frontmatter.suggestedActions || [];
+  const idx = parseInt(actionIndex, 10);
+  if (idx < 0 || idx >= actions.length) {
+    return res.status(400).json({ error: "Action index out of range" });
+  }
+
+  const action = actions[idx];
+  const jobId = action.jobId;
+  if (!jobId) return res.json({ status: "not-started" });
+
+  const job = agentJobs.get(jobId);
+  if (!job) return res.json({ status: "unknown", jobId });
+
+  res.json({
+    jobId,
+    status: job.status,
+    result: job.result,
+    startedAt: job.startedAt,
+    completedAt: job.completedAt,
+  });
+});
+
+function updateActionJobStatus(noteId: string, actionIdx: number, job: AgentJob) {
+  const note = getNote(noteId);
+  if (!note) return;
+
+  const actions = note.frontmatter.suggestedActions || [];
+  if (actionIdx < 0 || actionIdx >= actions.length) return;
+
+  actions[actionIdx].jobStatus = job.status as any;
+  if (job.result) actions[actionIdx].result = job.result;
+  patchNoteFrontmatter(noteId, { suggestedActions: actions });
+  broadcast("notes-updated");
+}
 
 app.delete("/api/pending/:id", (req, res) => {
   // Mark note as processed (remove from queue)
