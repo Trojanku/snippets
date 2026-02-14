@@ -59,6 +59,12 @@ export default {
         serif: ['Iowan Old Style', 'Palatino Linotype', 'Palatino', 'Times New Roman', 'serif'],
         sans: ['Avenir Next', 'Segoe UI', 'Helvetica Neue', 'Arial', 'sans-serif'],
       },
+      fontSize: {
+        '4xl': ['1rem', { lineHeight: '1.75' }],
+        '5': ['1.25rem', { lineHeight: '1.3' }],
+        '5.5': ['1.375rem', { lineHeight: '1.3' }],
+        '6xl': ['clamp(1.875rem, 4vw, 2.625rem)', { lineHeight: '1.25' }],
+      },
       borderRadius: {
         '2.5': '0.625rem',
         '3': '0.75rem',

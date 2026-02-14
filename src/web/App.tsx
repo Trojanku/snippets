@@ -161,7 +161,7 @@ export function App() {
       <div className="flex flex-col min-h-screen">
         <nav className="sticky top-0 z-20 flex items-center gap-5 px-7 py-3.5 bg-paper/94 border-b border-line backdrop-blur transition-colors duration-200">
           <span className="font-serif text-xl tracking-wider text-ink">notes-ai</span>
-          <div className="flex gap-1.5 flex-1">
+          <div className="flex gap-1.5 flex-1 nav-links">
             <button
               className={`bg-transparent border border-transparent text-ink-soft text-xs tracking-widest uppercase px-3 py-1.5 rounded-full cursor-pointer transition-colors duration-120 ${
                 state.view === "capture"
@@ -200,8 +200,8 @@ export function App() {
           </div>
           <ThemeToggle />
         </nav>
-        <div className="grid grid-cols-[minmax(0,1fr)_280px] gap-10 flex-1 w-full max-w-5xl mx-auto px-6 py-8">
-          <main className={`w-full mx-auto ${state.view === "note" ? "max-w-2xl" : "max-w-2xl"}`}>
+        <div className="grid grid-cols-[minmax(0,1fr)_280px] max-[1060px]:grid-cols-1 gap-10 max-[1060px]:gap-[22px] flex-1 w-full max-w-[1320px] mx-auto px-6 max-[700px]:px-[14px] py-8 max-[700px]:py-5">
+          <main className={`w-full mx-auto ${state.view === "note" ? "max-w-[760px]" : "max-w-[820px]"}`}>
             {state.view === "capture" && <Capture />}
             {state.view === "list" && <NoteList />}
             {state.view === "note" && state.activeNote && <NoteView />}

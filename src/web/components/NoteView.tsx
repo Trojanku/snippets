@@ -195,7 +195,7 @@ export function NoteView() {
       {isEditing ? (
         <div className="my-3 px-4.5 py-4.5 bg-gradient-to-b from-white/99 to-white/98 border border-line rounded-3 note-edit-box">
           <textarea
-            className="w-full min-h-70 px-3 py-3 font-sans text-base leading-1.6 border border-line rounded bg-white text-ink resize-vertical focus:outline-focus focus:outline-2 note-edit-area"
+            className="w-full min-h-70 px-3 py-3 font-sans text-base leading-1.6 border border-line rounded bg-white text-ink resize-vertical focus:outline-2 focus:outline-[rgb(var(--color-focus))] note-edit-area"
             value={editedContent}
             onChange={(e) => setEditedContent(e.target.value)}
             placeholder="Edit note content..."
@@ -246,7 +246,7 @@ export function NoteView() {
                   {actionEditing?.actionIndex === i ? (
                     <div className="flex flex-col gap-2">
                       <textarea
-                        className="text-xs px-2 py-2 border border-line rounded bg-white text-ink min-h-12.5 resize-vertical font-sans focus:outline-focus focus:outline-2 action-result-input"
+                        className="text-xs px-2 py-2 border border-line rounded bg-white text-ink min-h-12.5 resize-vertical font-sans focus:outline-2 focus:outline-[rgb(var(--color-focus))] action-result-input"
                         value={actionEditing.result}
                         onChange={(e) =>
                           setActionEditing({ ...actionEditing, result: e.target.value })
@@ -263,7 +263,7 @@ export function NoteView() {
                           Done ✓
                         </button>
                         <button
-                          className="text-xs tracking-widest uppercase px-2.5 py-1.5 rounded border border-line bg-transparent text-ink-soft cursor-pointer transition-all duration-120 hover:bg-red/5 hover:text-red action-cancel-result-btn"
+                          className="text-xs tracking-widest uppercase px-2.5 py-1.5 rounded border border-line bg-transparent text-ink-soft cursor-pointer transition-all duration-120 hover:bg-danger/10 hover:text-danger action-cancel-result-btn"
                           onClick={() => setActionEditing(null)}
                         >
                           Cancel
@@ -288,7 +288,7 @@ export function NoteView() {
                       )}
                       {!isCompleted && (
                         <button
-                          className="text-xs tracking-widest uppercase px-2.5 py-1.5 rounded border border-line bg-transparent text-ink-soft cursor-pointer transition-all duration-120 hover:bg-green/5 hover:text-success action-done-btn"
+                          className="text-xs tracking-widest uppercase px-2.5 py-1.5 rounded border border-line bg-transparent text-ink-soft cursor-pointer transition-all duration-120 hover:bg-success/10 hover:text-success action-done-btn"
                           title="Mark as done"
                           onClick={() =>
                             setActionEditing({ actionIndex: i, result: a.result || "" })

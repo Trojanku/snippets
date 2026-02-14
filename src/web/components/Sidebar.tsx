@@ -72,7 +72,7 @@ export function Sidebar() {
             >
               {node.name}
             </button>
-            <span className="ml-auto text-xs tracking-wider uppercase text-ink-soft font-semibold bg-opacity-3 px-1.5 py-0.5 rounded tree-count">{count}</span>
+            <span className="ml-auto text-xs tracking-wider uppercase text-ink-soft font-semibold bg-black/3 px-1.5 py-0.5 rounded tree-count">{count}</span>
           </div>
 
           {isExpanded && node.children.length > 0 && (
@@ -97,7 +97,7 @@ export function Sidebar() {
   const rootCount = state.notes.length;
 
   return (
-    <aside className="sticky top-20 flex flex-col gap-4 px-5.5 py-5.5 max-h-[calc(100vh-92px)] overflow-auto border border-line rounded-lg bg-white/42 sidebar">
+    <aside className="sticky top-20 max-[1060px]:static max-[1060px]:max-h-none max-[1060px]:w-full max-[1060px]:max-w-[760px] max-[1060px]:mx-auto flex flex-col gap-4 px-5.5 py-5.5 max-h-[calc(100vh-92px)] overflow-auto border border-line rounded-lg bg-white/42 sidebar">
       <h3 className="text-xs tracking-widest uppercase text-ink-soft mb-3">📁 Folders</h3>
       <div className="flex items-center gap-1.5 px-2 py-1.5 rounded tree-folder-row">
         <button
@@ -108,7 +108,7 @@ export function Sidebar() {
         >
           All notes
         </button>
-        <span className="ml-auto text-xs tracking-wider uppercase text-ink-soft font-semibold bg-opacity-3 px-1.5 py-0.5 rounded tree-count">{rootCount}</span>
+        <span className="ml-auto text-xs tracking-wider uppercase text-ink-soft font-semibold bg-black/3 px-1.5 py-0.5 rounded tree-count">{rootCount}</span>
       </div>
 
       <div className="flex flex-col gap-2 p-3 bg-white/30 rounded border border-line/50 tree-wrap">

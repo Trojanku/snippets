@@ -3,7 +3,6 @@
 @tailwind utilities;
 
 :root {
-  /* Light mode (default) - RGB values for Tailwind */
   --color-paper: 253 251 247;
   --color-paper-deep: 247 243 235;
   --color-ink: 39 36 31;
@@ -19,7 +18,6 @@
   --color-success: 54 91 57;
 }
 
-/* Explicit light mode */
 html.light {
   --color-paper: 253 251 247;
   --color-paper-deep: 247 243 235;
@@ -34,7 +32,6 @@ html.light {
   --color-danger-soft: 250 240 238;
 }
 
-/* Explicit dark mode */
 html.dark {
   --color-paper: 26 24 21;
   --color-paper-deep: 15 13 10;
@@ -49,9 +46,9 @@ html.dark {
   --color-danger-soft: 42 26 22;
   --color-caution: 212 165 116;
   --color-success: 109 179 118;
+  color-scheme: dark;
 }
 
-/* System dark mode preference (only if no explicit class set) */
 @media (prefers-color-scheme: dark) {
   html:not(.light) {
     --color-paper: 26 24 21;
@@ -71,8 +68,13 @@ html.dark {
 }
 
 @layer base {
+  * {
+    @apply m-0 box-border;
+  }
+
   body {
-    @apply bg-paper text-ink font-sans leading-relaxed transition-colors duration-200;
+    @apply font-sans text-ink leading-1.6 transition-colors duration-200;
+    background-color: rgb(var(--color-paper));
     background-image:
       radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.1) 0, transparent 34%),
       radial-gradient(circle at 100% 100%, rgba(244, 239, 229, 0.1) 0, transparent 40%);
@@ -83,87 +85,61 @@ html.dark {
       radial-gradient(circle at 0% 0%, rgba(100, 80, 60, 0.15) 0, transparent 34%),
       radial-gradient(circle at 100% 100%, rgba(50, 40, 30, 0.2) 0, transparent 40%);
   }
+}
+
+@layer components {
+  .status {
+    @apply text-xs tracking-widest uppercase px-2 py-0.5 rounded-full border;
+    font-size: 10px;
+  }
+  .status-raw { @apply bg-[#f8f4eb] text-[#76694d] border-[#e4dccf]; }
+  .status-processed { @apply bg-[#edf4ec] text-[#2f4f32] border-[#ccdccc]; }
+  .status-queued { @apply bg-[#f3f1f8] text-[#58536d] border-[#ddd7eb]; }
+  .status-processing {
+    @apply text-[#5b5b6f] border-[#e2dded];
+    background: linear-gradient(90deg, #f1eff7, #f7f5fb, #f1eff7);
+    background-size: 200% 100%;
+    animation: mist-shift 3s ease-in-out infinite;
+  }
+  .status-failed { @apply bg-[#f8ece8] text-[#7a3931] border-[#ecd1cb]; }
+
+  .badge { @apply text-xs rounded-full px-2 py-0.5 tracking-widest uppercase border border-[#dfd6c6] text-[#585047] bg-[#f9f6ee]; font-size: 10px; }
+  .action-clear { @apply text-success border-[#c8dcc8] bg-[#eef5ee]; }
+  .action-maybe { @apply text-[#7d5c35] border-[#e5d8c2] bg-[#faf5ea]; }
+
+  .note-content p,
+  .note-content ul,
+  .note-content ol,
+  .note-content blockquote { margin: 0 0 1.1em; }
+  .note-content h1,
+  .note-content h2,
+  .note-content h3,
+  .note-content h4 { @apply font-serif leading-tight; margin: 1.2em 0 0.6em; }
+  .note-content code { @apply bg-[#f4efe5] px-1 py-0.5 rounded; font-size: 0.86em; }
 
   html.dark button,
   html.dark input,
   html.dark textarea,
-  html.dark select {
-    @apply bg-paper text-ink border-line;
-  }
-}
+  html.dark select { @apply border-line; }
 
-@layer components {
-  /* Action chips and badges */
   html.dark .action-chip,
-  html.dark .badge {
-    @apply bg-paper-deep text-ink-soft border-line;
-  }
-
-  /* Note card dark mode */
-  html.dark .note-card {
-    @apply text-ink border-line;
-  }
-
-  html.dark .note-card:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-  }
-
-  /* Capture sheet dark mode */
-  html.dark .capture-sheet {
-    @apply border-line;
-    background: linear-gradient(180deg, rgba(26, 24, 21, 0.5) 0%, rgba(15, 13, 10, 0.8) 100%);
-  }
-
-  /* Sidebar dark mode */
-  html.dark .sidebar {
-    @apply border-line;
-    background-color: rgba(26, 24, 21, 0.5);
-  }
-
-  /* Textarea and text input dark mode */
+  html.dark .badge { @apply bg-paper-deep text-ink-soft border-line; }
+  html.dark .note-card { @apply text-ink border-line; }
+  html.dark .note-card:hover { background-color: rgba(255, 255, 255, 0.05); }
+  html.dark .capture-sheet { @apply border-line; background: linear-gradient(180deg, rgba(26, 24, 21, 0.5) 0%, rgba(15, 13, 10, 0.8) 100%); }
+  html.dark .sidebar { @apply border-line; background-color: rgba(26, 24, 21, 0.5); }
   html.dark textarea,
-  html.dark input[type="text"] {
-    @apply text-ink;
-    background-color: #252220;
-  }
-
-  /* Retry box dark mode */
-  html.dark .retry-box {
-    @apply bg-danger-soft border-danger;
-  }
-
-  /* Note view dark mode */
-  html.dark .note-view {
-    @apply border-line;
-    background: linear-gradient(180deg, rgba(26, 24, 21, 0.8), rgba(15, 13, 10, 0.9));
-  }
-
-  /* Delete confirm box dark mode */
-  html.dark .delete-confirm-box {
-    @apply bg-danger-soft border-danger;
-    color: #f5d7d3;
-  }
-
-  /* Action item dark mode */
-  html.dark .action-item {
-    @apply border-line;
-    background-color: rgba(124, 159, 143, 0.1);
-  }
-
-  html.dark .action-item.action-user {
-    @apply border-l-accent;
-  }
-
-  /* Filter inputs dark mode */
+  html.dark input[type="text"] { @apply text-ink; background-color: #252220; }
+  html.dark .retry-box { @apply bg-danger-soft border-danger; }
+  html.dark .note-view { @apply border-line; background: linear-gradient(180deg, rgba(26, 24, 21, 0.8), rgba(15, 13, 10, 0.9)); }
+  html.dark .delete-confirm-box { @apply bg-danger-soft border-danger; color: #f5d7d3; }
+  html.dark .action-item { @apply border-line; background-color: rgba(124, 159, 143, 0.1); }
+  html.dark .action-item.action-user { @apply border-l-accent; }
   html.dark .filter-input,
-  html.dark .filter-select {
-    @apply text-ink border-line;
-    background-color: rgba(58, 53, 48, 0.5);
-  }
+  html.dark .filter-select { @apply text-ink border-line; background-color: rgba(58, 53, 48, 0.5); }
 }
 
 @layer utilities {
-  /* Focus visible states */
   .nav-links button:focus-visible,
   .capture-btn:focus-visible,
   .note-card:focus-visible,
@@ -174,4 +150,10 @@ html.dark {
     @apply outline-2 outline-offset-2;
     outline-color: rgb(var(--color-focus));
   }
+}
+
+@keyframes mist-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }

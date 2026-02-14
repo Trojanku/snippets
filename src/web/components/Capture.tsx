@@ -25,7 +25,7 @@ export function Capture() {
       <div className="border border-line rounded-2xl px-5.5 py-5.5 bg-gradient-to-b from-white/99 to-white/98 shadow-lg">
         <div className="text-xs tracking-widest uppercase text-ink-soft mb-2.5">Capture</div>
         <textarea
-          className="w-full p-0 text-5xl font-serif text-ink bg-transparent placeholder-gray-400 focus:outline-none resize-vertical"
+          className="w-full p-0 text-[20px] leading-[1.75] font-serif text-ink bg-transparent placeholder-gray-400 focus:outline-none resize-vertical"
           style={{ minHeight: "320px" }}
           value={content}
           onChange={(e) => setContent(e.target.value)}
