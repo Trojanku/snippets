@@ -769,12 +769,121 @@ body {
   border-radius: 3px;
 }
 
+.suggested-actions {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
 .suggested-actions h3 {
-  font-size: 12px;
-  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  color: var(--ink);
+}
+
+.action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.action-item {
+  padding: 14px;
+  border: 1px solid #e5ddd1;
+  border-radius: 10px;
+  background: #f9f7f2;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 120ms ease;
+}
+
+.action-item.action-user {
+  border-left: 3px solid #3d5143;
+}
+
+.action-item.action-agent {
+  border-left: 3px solid #6f8572;
+  background: #f3f7f4;
+}
+
+.action-item.priority-high {
+  border-color: #d4a574;
+  background: #faf6f0;
+}
+
+.action-item.completed {
+  opacity: 0.6;
+  background: #f0f0f0;
+}
+
+.action-item.completed .action-label {
+  text-decoration: line-through;
   color: var(--ink-soft);
-  letter-spacing: 0.12em;
+}
+
+.action-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-assignee {
+  font-size: 11px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.action-priority {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: #d4a574;
+  color: #fff;
+}
+
+.action-label {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+  margin: 0;
+}
+
+.action-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.action-run-btn,
+.action-done-btn {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.action-run-btn:hover {
+  background: #3d5143;
+  color: #f6f8f5;
+  border-color: #2f4335;
+}
+
+.action-done-btn:hover {
+  background: rgba(61, 81, 67, 0.1);
+  color: #365b39;
 }
 
 .action-chips {

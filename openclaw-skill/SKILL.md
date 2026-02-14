@@ -86,8 +86,35 @@ title: "..."
 themes: ["...", "..."]
 summary: "..."
 connections: ["..."]
-suggestedActions: []
+suggestedActions:
+  - type: "summarize"
+    label: "Write a one-liner summary for the README"
+    assignee: "agent"
+    priority: "high"
+  - type: "create-task"
+    label: "Follow up with team on budget review"
+    assignee: "user"
+    priority: "medium"
 ```
+
+### Suggested Actions Best Practices
+
+**For user actions** (assignee: "user"):
+- Clear, concrete next steps
+- Specific enough to act on immediately
+- Examples: "Schedule meeting", "Review PR #123", "Update docs"
+- Use priority: high/medium/low based on urgency
+
+**For agent actions** (assignee: "agent"):
+- Self-contained AI work (summarization, expansion, lookup)
+- Actionable by the Snippets skill or OpenClaw
+- Examples: "Expand this into a blog post", "Find related research", "Generate outline"
+- These become executable tasks the system can run
+
+**Conservative default:**
+- Only create actions when intent is *explicit*
+- Ambiguous notes → empty `suggestedActions`
+- Better to miss an action than over-generate
 
 Keep the note body unchanged.
 

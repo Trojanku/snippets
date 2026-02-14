@@ -131,13 +131,40 @@ export function NoteView() {
 
       {fm.suggestedActions && fm.suggestedActions.length > 0 && !isEditing && (
         <div className="suggested-actions">
-          <h3>Suggested Actions</h3>
-          <div className="action-chips">
-            {fm.suggestedActions.map((a, i) => (
-              <span key={i} className="action-chip" data-type={a.type}>
-                {a.label}
-              </span>
-            ))}
+          <h3>💡 Suggested Actions</h3>
+          <div className="action-list">
+            {fm.suggestedActions.map((a, i) => {
+              const isAgent = a.assignee === "agent";
+              const isCompleted = a.status === "completed";
+              const isPriority = a.priority === "high";
+              
+              return (
+                <div
+                  key={i}
+                  className={`action-item action-${a.assignee || "user"} priority-${a.priority || "medium"} ${isCompleted ? "completed" : ""}`}
+                >
+                  <div className="action-header">
+                    <span className="action-assignee">
+                      {isAgent ? "🤖 Agent" : "👤 You"}
+                    </span>
+                    {isPriority && <span className="action-priority">High</span>}
+                  </div>
+                  <p className="action-label">{a.label}</p>
+                  <div className="action-controls">
+                    {isAgent && !isCompleted && (
+                      <button className="action-run-btn" title="Run this action">
+                        Run →
+                      </button>
+                    )}
+                    {!isCompleted && (
+                      <button className="action-done-btn" title="Mark as done">
+                        Done ✓
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

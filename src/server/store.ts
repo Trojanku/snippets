@@ -26,7 +26,13 @@ export interface NoteFrontmatter {
   themes?: string[];
   summary?: string;
   connections?: string[];
-  suggestedActions?: { type: string; label: string }[];
+  suggestedActions?: {
+    type: string;
+    label: string;
+    assignee?: "user" | "agent";
+    priority?: "low" | "medium" | "high";
+    status?: "pending" | "completed" | "declined";
+  }[];
   status?: "raw" | "queued" | "processing" | "processed" | "failed" | string;
   kind?: "knowledge" | "action" | "idea" | "journal" | "reference" | string;
   actionability?: "none" | "maybe" | "clear" | string;
