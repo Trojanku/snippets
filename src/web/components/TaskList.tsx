@@ -19,7 +19,9 @@ export function TaskList() {
   }
 
   return (
-    <div className="note-list">
+    <section className="task-list">
+      <div className="note-card-date">Agenda · {taskNotes.length} actionable notes</div>
+      <div className="note-list">
       {taskNotes.map((n) => (
         <button key={n.id} className="note-card" onClick={() => openNote(n.id)}>
           <div className="note-card-title">{n.title || n.id}</div>
@@ -34,6 +36,7 @@ export function TaskList() {
           </div>
         </button>
       ))}
-    </div>
+      </div>
+    </section>
   );
 }

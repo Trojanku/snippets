@@ -22,17 +22,23 @@ export function Capture() {
 
   return (
     <form className="capture" onSubmit={handleSubmit}>
-      <textarea
-        className="capture-input"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder="What's on your mind?"
-        autoFocus
-        rows={12}
-      />
-      <button className="capture-btn" type="submit" disabled={saving || !content.trim()}>
-        {saving ? "Saving..." : "Save Note"}
-      </button>
+      <div className="capture-sheet">
+        <div className="capture-label">Capture</div>
+        <textarea
+          className="capture-input"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="What needs to be remembered?"
+          autoFocus
+          rows={12}
+        />
+      </div>
+      <div className="capture-actions">
+        <span className="capture-hint">Write freely. Processing runs automatically.</span>
+        <button className="capture-btn" type="submit" disabled={saving || !content.trim()}>
+          {saving ? "Saving..." : "Save Note"}
+        </button>
+      </div>
     </form>
   );
 }

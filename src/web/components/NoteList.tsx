@@ -27,7 +27,8 @@ export function NoteList() {
   }
 
   return (
-    <>
+    <section>
+      <div className="note-card-date">Notes stream · {filtered.length} shown</div>
       <div className="filters">
         <input
           className="filter-input"
@@ -79,6 +80,6 @@ export function NoteList() {
           </button>
         ))}
       </div>
-    </>
+    </section>
   );
 }

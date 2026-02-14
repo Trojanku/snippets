@@ -144,7 +144,7 @@ export function App() {
           </div>
         </nav>
         <div className="layout">
-          <main className="main-panel">
+          <main className={`main-panel ${state.view === "note" ? "note-reading" : ""}`}>
             {state.view === "capture" && <Capture />}
             {state.view === "list" && <NoteList />}
             {state.view === "note" && state.activeNote && <NoteView />}
