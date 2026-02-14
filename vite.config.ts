@@ -6,6 +6,7 @@ export default defineConfig({
   root: "src/web",
   server: {
     port: 5173,
+    host: true, // Expose on Tailscale network
     proxy: {
       "/api": "http://localhost:3811",
     },
