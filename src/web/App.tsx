@@ -17,6 +17,7 @@ import { NoteList } from "./components/NoteList.tsx";
 import { NoteView } from "./components/NoteView.tsx";
 import { Sidebar } from "./components/Sidebar.tsx";
 import { TaskList } from "./components/TaskList.tsx";
+import { ThemeToggle } from "./components/ThemeToggle.tsx";
 
 type View = "capture" | "list" | "note" | "tasks";
 
@@ -160,7 +161,7 @@ export function App() {
       <div className="app">
         <nav className="topnav">
           <span className="logo">notes-ai</span>
-          <div className="nav-links">
+          <div className="nav-links" style={{ flex: 1 }}>
             <button
               className={state.view === "capture" ? "active" : ""}
               onClick={() => dispatch({ type: "SET_VIEW", view: "capture" })}
@@ -181,6 +182,7 @@ export function App() {
               Tasks
             </button>
           </div>
+          <ThemeToggle />
         </nav>
         <div className="layout">
           <main className={`main-panel ${state.view === "note" ? "note-reading" : ""}`}>

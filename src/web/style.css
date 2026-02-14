@@ -5,6 +5,7 @@
 }
 
 :root {
+  /* Light mode */
   --paper: #fdfbf7;
   --paper-deep: #f7f3eb;
   --ink: #27241f;
@@ -20,14 +21,70 @@
   --sans: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root.dark,
+  body.dark {
+    --paper: #1a1815;
+    --paper-deep: #0f0d0a;
+    --ink: #f5f3f0;
+    --ink-soft: #b8b4ad;
+    --line: #3a3530;
+    --line-strong: #504a42;
+    --focus: #8db89f;
+    --accent: #7c9f8f;
+    --accent-soft: #1f2e28;
+    --danger: #d97760;
+    --danger-soft: #2a1a16;
+  }
+}
+
+/* Explicit dark mode class (respects user preference) */
+.dark {
+  --paper: #1a1815;
+  --paper-deep: #0f0d0a;
+  --ink: #f5f3f0;
+  --ink-soft: #b8b4ad;
+  --line: #3a3530;
+  --line-strong: #504a42;
+  --focus: #8db89f;
+  --accent: #7c9f8f;
+  --accent-soft: #1f2e28;
+  --danger: #d97760;
+  --danger-soft: #2a1a16;
+}
+
+/* Light mode override */
+.light {
+  --paper: #fdfbf7;
+  --paper-deep: #f7f3eb;
+  --ink: #27241f;
+  --ink-soft: #6b665f;
+  --line: #ddd6ca;
+  --line-strong: #cfc5b7;
+  --focus: #6f8572;
+  --accent: #7c8f7f;
+  --accent-soft: #eff4ee;
+  --danger: #ad5f50;
+  --danger-soft: #faf0ee;
+}
+
 body {
   font-family: var(--sans);
   background:
-    radial-gradient(circle at 0% 0%, #ffffff 0, transparent 34%),
-    radial-gradient(circle at 100% 100%, #f4efe5 0, transparent 40%),
+    radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.1) 0, transparent 34%),
+    radial-gradient(circle at 100% 100%, rgba(244, 239, 229, 0.1) 0, transparent 40%),
     var(--paper);
   color: var(--ink);
   line-height: 1.6;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+.dark body {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(0, 0, 0, 0.3) 0, transparent 34%),
+    radial-gradient(circle at 100% 100%, rgba(26, 24, 21, 0.3) 0, transparent 40%),
+    var(--paper);
 }
 
 .app {
@@ -42,12 +99,12 @@ body {
   z-index: 20;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 20px;
   padding: 14px 28px;
   background: rgba(253, 251, 247, 0.94);
   border-bottom: 1px solid var(--line);
   backdrop-filter: blur(6px);
+  transition: background-color 200ms ease, border-color 200ms ease;
 }
 
 .logo {
@@ -83,6 +140,24 @@ body {
   background: var(--accent-soft);
   border-color: #d2dccc;
   color: #324238;
+}
+
+.theme-toggle {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 18px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 120ms ease;
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--focus);
+  color: var(--ink);
 }
 
 .nav-badge {
