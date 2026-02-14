@@ -56,7 +56,7 @@ export function ThemeToggle() {
 
   return (
     <button
-      className="theme-toggle"
+      className="bg-transparent border border-line text-ink-soft text-lg px-2.5 py-1.75 rounded cursor-pointer transition-all duration-120 hover:bg-white/10 hover:border-focus hover:text-ink flex-shrink-0"
       onClick={handleToggle}
       title={`Theme: ${theme} (click to cycle)`}
       aria-label="Toggle theme"

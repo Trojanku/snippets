@@ -55,26 +55,28 @@ export function Sidebar() {
       const count = folderCounts.get(node.path) || 0;
 
       return (
-        <div key={`folder:${key}`} className="tree-node" style={{ paddingLeft: `${depth * 12}px` }}>
-          <div className="tree-folder-row">
+        <div key={`folder:${key}`} className="flex flex-col gap-1.5" style={{ paddingLeft: `${depth * 3}px` }}>
+          <div className="flex items-center gap-1.5 px-2 py-1.5 rounded transition-colors duration-120 hover:bg-white/70 tree-folder-row">
             <button
-              className="tree-toggle"
+              className="w-4 min-w-4 text-ink-soft text-sm p-0 border-0 bg-none cursor-pointer tree-toggle"
               onClick={() => toggleFolder(key)}
               aria-label={isExpanded ? "Collapse folder" : "Expand folder"}
             >
               {isExpanded ? "▾" : "▸"}
             </button>
             <button
-              className={`tree-folder ${selectedFolder === node.path ? "active" : ""}`}
+              className={`text-sm rounded px-2 py-1.5 text-ink-soft flex-1 text-left tree-folder ${
+                selectedFolder === node.path ? "bg-gray-200 text-ink font-semibold" : "hover:bg-white hover:text-ink"
+              }`}
               onClick={() => setSelectedFolder(node.path)}
             >
               {node.name}
             </button>
-            <span className="tree-count">{count}</span>
+            <span className="ml-auto text-xs tracking-wider uppercase text-ink-soft font-semibold bg-opacity-3 px-1.5 py-0.5 rounded tree-count">{count}</span>
           </div>
 
           {isExpanded && node.children.length > 0 && (
-            <div className="tree-children">
+            <div className="flex flex-col gap-1">
               {node.children.map((child) => renderTreeNode(child, depth + 1))}
             </div>
           )}
@@ -84,8 +86,8 @@ export function Sidebar() {
 
     const noteTitle = node.title || node.id || node.name;
     return (
-      <div key={`note:${node.path}`} className="tree-node" style={{ paddingLeft: `${depth * 12}px` }}>
-        <button className="tree-note" onClick={() => node.id && openNote(node.id)}>
+      <div key={`note:${node.path}`} className="flex flex-col gap-1.5" style={{ paddingLeft: `${depth * 3}px` }}>
+        <button className="text-sm rounded px-2 py-1.5 text-ink-soft text-left tree-note hover:bg-white/70 hover:text-ink" onClick={() => node.id && openNote(node.id)}>
           {noteTitle}
         </button>
       </div>
@@ -95,33 +97,35 @@ export function Sidebar() {
   const rootCount = state.notes.length;
 
   return (
-    <aside className="sidebar">
-      <h3>📁 Folders</h3>
-      <div className="tree-folder-row">
+    <aside className="sticky top-20 flex flex-col gap-4 px-5.5 py-5.5 max-h-[calc(100vh-92px)] overflow-auto border border-line rounded-lg bg-white/42 sidebar">
+      <h3 className="text-xs tracking-widest uppercase text-ink-soft mb-3">📁 Folders</h3>
+      <div className="flex items-center gap-1.5 px-2 py-1.5 rounded tree-folder-row">
         <button
-          className={`tree-folder ${selectedFolder === "" ? "active" : ""}`}
+          className={`text-sm rounded px-2 py-1.5 text-ink-soft flex-1 text-left tree-folder ${
+            selectedFolder === "" ? "bg-gray-200 text-ink font-semibold" : "hover:bg-white hover:text-ink"
+          }`}
           onClick={() => setSelectedFolder("")}
         >
           All notes
         </button>
-        <span className="tree-count">{rootCount}</span>
+        <span className="ml-auto text-xs tracking-wider uppercase text-ink-soft font-semibold bg-opacity-3 px-1.5 py-0.5 rounded tree-count">{rootCount}</span>
       </div>
 
-      <div className="tree-wrap">
-        {tree ? renderTreeNode(tree, 0) : <p className="muted">Loading tree...</p>}
+      <div className="flex flex-col gap-2 p-3 bg-white/30 rounded border border-line/50 tree-wrap">
+        {tree ? renderTreeNode(tree, 0) : <p className="text-ink-soft text-sm">Loading tree...</p>}
       </div>
 
       {activeNote && (
         <>
-          <h3>Connections</h3>
+          <h3 className="text-xs tracking-widest uppercase text-ink-soft mb-3">Connections</h3>
           {relatedNotes.length === 0 ? (
-            <p className="muted">No connections yet</p>
+            <p className="text-ink-soft text-sm">No connections yet</p>
           ) : (
-            <ul className="connection-list">
+            <ul className="list-none flex flex-col gap-2.75">
               {relatedNotes.map((r) => (
-                <li key={r.otherId}>
-                  <button onClick={() => void openNote(r.otherId)}>{r.otherTitle}</button>
-                  <span className="muted">{r.reason}</span>
+                <li key={r.otherId} className="flex flex-col gap-0.5 pb-2 border-b border-dashed border-line/70">
+                  <button className="text-sm text-left text-ink hover:text-focus" onClick={() => void openNote(r.otherId)}>{r.otherTitle}</button>
+                  <span className="text-ink-soft text-sm">{r.reason}</span>
                 </li>
               ))}
             </ul>
@@ -129,9 +133,9 @@ export function Sidebar() {
         </>
       )}
 
-      <div className="sidebar-footer">
-        <p className="muted">{notes.length} notes</p>
-        <p className="muted">{actionableCount} actionable</p>
+      <div className="mt-auto pt-2 border-t border-line">
+        <p className="text-ink-soft text-sm">{notes.length} notes</p>
+        <p className="text-ink-soft text-sm">{actionableCount} actionable</p>
       </div>
     </aside>
   );

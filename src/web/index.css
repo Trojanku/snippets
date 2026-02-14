@@ -1,0 +1,177 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Light mode (default) - RGB values for Tailwind */
+  --color-paper: 253 251 247;
+  --color-paper-deep: 247 243 235;
+  --color-ink: 39 36 31;
+  --color-ink-soft: 107 102 95;
+  --color-line: 221 214 202;
+  --color-line-strong: 207 197 183;
+  --color-focus: 111 133 114;
+  --color-accent: 124 143 127;
+  --color-accent-soft: 239 244 238;
+  --color-danger: 173 95 80;
+  --color-danger-soft: 250 240 238;
+  --color-caution: 212 165 116;
+  --color-success: 54 91 57;
+}
+
+/* Explicit light mode */
+html.light {
+  --color-paper: 253 251 247;
+  --color-paper-deep: 247 243 235;
+  --color-ink: 39 36 31;
+  --color-ink-soft: 107 102 95;
+  --color-line: 221 214 202;
+  --color-line-strong: 207 197 183;
+  --color-focus: 111 133 114;
+  --color-accent: 124 143 127;
+  --color-accent-soft: 239 244 238;
+  --color-danger: 173 95 80;
+  --color-danger-soft: 250 240 238;
+}
+
+/* Explicit dark mode */
+html.dark {
+  --color-paper: 26 24 21;
+  --color-paper-deep: 15 13 10;
+  --color-ink: 245 243 240;
+  --color-ink-soft: 184 180 173;
+  --color-line: 58 53 48;
+  --color-line-strong: 80 74 66;
+  --color-focus: 141 184 159;
+  --color-accent: 124 159 143;
+  --color-accent-soft: 31 46 40;
+  --color-danger: 217 119 96;
+  --color-danger-soft: 42 26 22;
+  --color-caution: 212 165 116;
+  --color-success: 109 179 118;
+}
+
+/* System dark mode preference (only if no explicit class set) */
+@media (prefers-color-scheme: dark) {
+  html:not(.light) {
+    --color-paper: 26 24 21;
+    --color-paper-deep: 15 13 10;
+    --color-ink: 245 243 240;
+    --color-ink-soft: 184 180 173;
+    --color-line: 58 53 48;
+    --color-line-strong: 80 74 66;
+    --color-focus: 141 184 159;
+    --color-accent: 124 159 143;
+    --color-accent-soft: 31 46 40;
+    --color-danger: 217 119 96;
+    --color-danger-soft: 42 26 22;
+    --color-caution: 212 165 116;
+    --color-success: 109 179 118;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-paper text-ink font-sans leading-relaxed transition-colors duration-200;
+    background-image:
+      radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.1) 0, transparent 34%),
+      radial-gradient(circle at 100% 100%, rgba(244, 239, 229, 0.1) 0, transparent 40%);
+  }
+
+  html.dark body {
+    background-image:
+      radial-gradient(circle at 0% 0%, rgba(100, 80, 60, 0.15) 0, transparent 34%),
+      radial-gradient(circle at 100% 100%, rgba(50, 40, 30, 0.2) 0, transparent 40%);
+  }
+
+  html.dark button,
+  html.dark input,
+  html.dark textarea,
+  html.dark select {
+    @apply bg-paper text-ink border-line;
+  }
+}
+
+@layer components {
+  /* Action chips and badges */
+  html.dark .action-chip,
+  html.dark .badge {
+    @apply bg-paper-deep text-ink-soft border-line;
+  }
+
+  /* Note card dark mode */
+  html.dark .note-card {
+    @apply text-ink border-line;
+  }
+
+  html.dark .note-card:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  /* Capture sheet dark mode */
+  html.dark .capture-sheet {
+    @apply border-line;
+    background: linear-gradient(180deg, rgba(26, 24, 21, 0.5) 0%, rgba(15, 13, 10, 0.8) 100%);
+  }
+
+  /* Sidebar dark mode */
+  html.dark .sidebar {
+    @apply border-line;
+    background-color: rgba(26, 24, 21, 0.5);
+  }
+
+  /* Textarea and text input dark mode */
+  html.dark textarea,
+  html.dark input[type="text"] {
+    @apply text-ink;
+    background-color: #252220;
+  }
+
+  /* Retry box dark mode */
+  html.dark .retry-box {
+    @apply bg-danger-soft border-danger;
+  }
+
+  /* Note view dark mode */
+  html.dark .note-view {
+    @apply border-line;
+    background: linear-gradient(180deg, rgba(26, 24, 21, 0.8), rgba(15, 13, 10, 0.9));
+  }
+
+  /* Delete confirm box dark mode */
+  html.dark .delete-confirm-box {
+    @apply bg-danger-soft border-danger;
+    color: #f5d7d3;
+  }
+
+  /* Action item dark mode */
+  html.dark .action-item {
+    @apply border-line;
+    background-color: rgba(124, 159, 143, 0.1);
+  }
+
+  html.dark .action-item.action-user {
+    @apply border-l-accent;
+  }
+
+  /* Filter inputs dark mode */
+  html.dark .filter-input,
+  html.dark .filter-select {
+    @apply text-ink border-line;
+    background-color: rgba(58, 53, 48, 0.5);
+  }
+}
+
+@layer utilities {
+  /* Focus visible states */
+  .nav-links button:focus-visible,
+  .capture-btn:focus-visible,
+  .note-card:focus-visible,
+  .filter-input:focus-visible,
+  .filter-select:focus-visible,
+  .retry-btn:focus-visible,
+  .sidebar button:focus-visible {
+    @apply outline-2 outline-offset-2;
+    outline-color: rgb(var(--color-focus));
+  }
+}

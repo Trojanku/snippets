@@ -158,25 +158,41 @@ export function App() {
 
   return (
     <AppContext value={ctx}>
-      <div className="app">
-        <nav className="topnav">
-          <span className="logo">notes-ai</span>
-          <div className="nav-links" style={{ flex: 1 }}>
+      <div className="flex flex-col min-h-screen">
+        <nav className="sticky top-0 z-20 flex items-center gap-5 px-7 py-3.5 bg-paper/94 border-b border-line backdrop-blur transition-colors duration-200">
+          <span className="font-serif text-xl tracking-wider text-ink">notes-ai</span>
+          <div className="flex gap-1.5 flex-1">
             <button
-              className={state.view === "capture" ? "active" : ""}
+              className={`bg-transparent border border-transparent text-ink-soft text-xs tracking-widest uppercase px-3 py-1.5 rounded-full cursor-pointer transition-colors duration-120 ${
+                state.view === "capture"
+                  ? "bg-accent-soft border-line text-ink"
+                  : "hover:border-line hover:text-ink"
+              }`}
               onClick={() => dispatch({ type: "SET_VIEW", view: "capture" })}
             >
               Capture
             </button>
             <button
-              className={state.view === "list" ? "active" : ""}
+              className={`bg-transparent border border-transparent text-ink-soft text-xs tracking-widest uppercase px-3 py-1.5 rounded-full cursor-pointer transition-colors duration-120 ${
+                state.view === "list"
+                  ? "bg-accent-soft border-line text-ink"
+                  : "hover:border-line hover:text-ink"
+              }`}
               onClick={() => dispatch({ type: "SET_VIEW", view: "list" })}
             >
               Notes
-              {readyToReadCount > 0 && <span className="nav-badge">{readyToReadCount}</span>}
+              {readyToReadCount > 0 && (
+                <span className="ml-2 text-xs rounded-full px-1.75 py-0.5 border border-green-600 bg-green-100 text-green-900">
+                  {readyToReadCount}
+                </span>
+              )}
             </button>
             <button
-              className={state.view === "tasks" ? "active" : ""}
+              className={`bg-transparent border border-transparent text-ink-soft text-xs tracking-widest uppercase px-3 py-1.5 rounded-full cursor-pointer transition-colors duration-120 ${
+                state.view === "tasks"
+                  ? "bg-accent-soft border-line text-ink"
+                  : "hover:border-line hover:text-ink"
+              }`}
               onClick={() => dispatch({ type: "SET_VIEW", view: "tasks" })}
             >
               Tasks
@@ -184,8 +200,8 @@ export function App() {
           </div>
           <ThemeToggle />
         </nav>
-        <div className="layout">
-          <main className={`main-panel ${state.view === "note" ? "note-reading" : ""}`}>
+        <div className="grid grid-cols-[minmax(0,1fr)_280px] gap-10 flex-1 w-full max-w-5xl mx-auto px-6 py-8">
+          <main className={`w-full mx-auto ${state.view === "note" ? "max-w-2xl" : "max-w-2xl"}`}>
             {state.view === "capture" && <Capture />}
             {state.view === "list" && <NoteList />}
             {state.view === "note" && state.activeNote && <NoteView />}
