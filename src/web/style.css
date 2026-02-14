@@ -68,6 +68,86 @@ html.dark {
   }
 }
 
+/* Dark mode hardcoded color replacements */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark button,
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: var(--paper);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+/* Specific hardcoded colors that break in dark mode */
+html.dark .action-chip,
+html.dark .badge {
+  background-color: var(--paper-deep);
+  color: var(--ink-soft);
+  border-color: var(--line);
+}
+
+html.dark .note-card {
+  color: var(--ink);
+  border-color: var(--line);
+  background-color: transparent;
+}
+
+html.dark .note-card:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+html.dark .capture-sheet {
+  background: linear-gradient(180deg, rgba(26, 24, 21, 0.5) 0%, rgba(15, 13, 10, 0.8) 100%);
+  border-color: var(--line);
+}
+
+html.dark .sidebar {
+  background-color: rgba(26, 24, 21, 0.5);
+  border-color: var(--line);
+}
+
+html.dark textarea,
+html.dark input[type="text"] {
+  background-color: #252220;
+  color: var(--ink);
+}
+
+html.dark .retry-box {
+  background-color: var(--danger-soft);
+  border-color: var(--danger);
+}
+
+html.dark .note-view {
+  background: linear-gradient(180deg, rgba(26, 24, 21, 0.8), rgba(15, 13, 10, 0.9));
+  border-color: var(--line);
+}
+
+html.dark .delete-confirm-box {
+  background-color: var(--danger-soft);
+  border-color: var(--danger);
+  color: #f5d7d3;
+}
+
+html.dark .action-item {
+  background-color: rgba(124, 159, 143, 0.1);
+  border-color: var(--line);
+}
+
+html.dark .action-item.action-user {
+  border-left-color: var(--accent);
+}
+
+html.dark .filter-input,
+html.dark .filter-select {
+  background-color: rgba(58, 53, 48, 0.5);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
 body {
   font-family: var(--sans);
   background:
@@ -79,10 +159,10 @@ body {
   transition: background-color 200ms ease, color 200ms ease;
 }
 
-.dark body {
+html.dark body {
   background:
-    radial-gradient(circle at 0% 0%, rgba(0, 0, 0, 0.3) 0, transparent 34%),
-    radial-gradient(circle at 100% 100%, rgba(26, 24, 21, 0.3) 0, transparent 40%),
+    radial-gradient(circle at 0% 0%, rgba(100, 80, 60, 0.15) 0, transparent 34%),
+    radial-gradient(circle at 100% 100%, rgba(50, 40, 30, 0.2) 0, transparent 40%),
     var(--paper);
 }
 
