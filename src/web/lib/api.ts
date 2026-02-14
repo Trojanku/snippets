@@ -10,6 +10,10 @@ export interface NoteSummary {
   connections?: string[];
   suggestedActions?: { type: string; label: string }[];
   status?: string;
+  kind?: "knowledge" | "action" | "idea" | "journal" | "reference" | string;
+  actionability?: "none" | "maybe" | "clear" | string;
+  classificationConfidence?: number;
+  processingError?: string;
 }
 
 export interface FullNote {

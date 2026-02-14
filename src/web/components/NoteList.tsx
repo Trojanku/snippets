@@ -23,9 +23,15 @@ export function NoteList() {
               ))}
             </div>
           )}
-          <span className={`status status-${n.status || "raw"}`}>
-            {n.status || "raw"}
-          </span>
+          <div className="badges-row">
+            <span className="badge badge-kind">{n.kind || "unknown"}</span>
+            <span className={`badge badge-actionability action-${n.actionability || "none"}`}>
+              {n.actionability || "none"}
+            </span>
+            <span className={`status status-${n.status || "raw"}`}>
+              {n.status || "raw"}
+            </span>
+          </div>
         </button>
       ))}
     </div>

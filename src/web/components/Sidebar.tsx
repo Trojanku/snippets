@@ -25,6 +25,10 @@ export function Sidebar() {
     new Set(notes.flatMap((n) => n.themes || []))
   ).sort();
 
+  const actionableCount = notes.filter(
+    (n) => n.actionability === "clear" || n.kind === "action"
+  ).length;
+
   return (
     <aside className="sidebar">
       {activeNote ? (
@@ -76,6 +80,7 @@ export function Sidebar() {
 
       <div className="sidebar-footer">
         <p className="muted">{notes.length} notes</p>
+        <p className="muted">{actionableCount} actionable</p>
       </div>
     </aside>
   );

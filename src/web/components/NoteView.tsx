@@ -16,6 +16,13 @@ export function NoteView() {
         {fm.status && (
           <span className={`status status-${fm.status}`}>{fm.status}</span>
         )}
+        <span className="badge badge-kind">{fm.kind || "unknown"}</span>
+        <span className={`badge badge-actionability action-${fm.actionability || "none"}`}>
+          {fm.actionability || "none"}
+        </span>
+        {typeof fm.classificationConfidence === "number" && (
+          <span className="muted">confidence {(fm.classificationConfidence * 100).toFixed(0)}%</span>
+        )}
       </div>
 
       {fm.themes && fm.themes.length > 0 && (

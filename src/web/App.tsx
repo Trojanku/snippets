@@ -15,9 +15,9 @@ import { Capture } from "./components/Capture.tsx";
 import { NoteList } from "./components/NoteList.tsx";
 import { NoteView } from "./components/NoteView.tsx";
 import { Sidebar } from "./components/Sidebar.tsx";
-import { Timeline } from "./components/Timeline.tsx";
+import { TaskList } from "./components/TaskList.tsx";
 
-type View = "capture" | "list" | "note" | "timeline" | "memory" | "mission";
+type View = "capture" | "list" | "note" | "tasks";
 
 interface AppState {
   notes: NoteSummary[];
@@ -136,22 +136,10 @@ export function App() {
               Notes
             </button>
             <button
-              className={state.view === "timeline" ? "active" : ""}
-              onClick={() => dispatch({ type: "SET_VIEW", view: "timeline" })}
+              className={state.view === "tasks" ? "active" : ""}
+              onClick={() => dispatch({ type: "SET_VIEW", view: "tasks" })}
             >
-              Timeline
-            </button>
-            <button
-              className={state.view === "memory" ? "active" : ""}
-              onClick={() => dispatch({ type: "SET_VIEW", view: "memory" })}
-            >
-              Memory
-            </button>
-            <button
-              className={state.view === "mission" ? "active" : ""}
-              onClick={() => dispatch({ type: "SET_VIEW", view: "mission" })}
-            >
-              Mission
+              Tasks
             </button>
           </div>
         </nav>
@@ -160,19 +148,7 @@ export function App() {
             {state.view === "capture" && <Capture />}
             {state.view === "list" && <NoteList />}
             {state.view === "note" && state.activeNote && <NoteView />}
-            {state.view === "timeline" && <Timeline />}
-            {state.view === "memory" && (
-              <div className="markdown-page">
-                <h2>Memory</h2>
-                <pre>{state.memory}</pre>
-              </div>
-            )}
-            {state.view === "mission" && (
-              <div className="markdown-page">
-                <h2>Mission</h2>
-                <pre>{state.mission}</pre>
-              </div>
-            )}
+            {state.view === "tasks" && <TaskList />}
           </main>
           <Sidebar />
         </div>
