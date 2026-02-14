@@ -5,7 +5,7 @@
 }
 
 :root {
-  /* Light mode */
+  /* Light mode (default) */
   --paper: #fdfbf7;
   --paper-deep: #f7f3eb;
   --ink: #27241f;
@@ -21,26 +21,23 @@
   --sans: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  :root.dark,
-  body.dark {
-    --paper: #1a1815;
-    --paper-deep: #0f0d0a;
-    --ink: #f5f3f0;
-    --ink-soft: #b8b4ad;
-    --line: #3a3530;
-    --line-strong: #504a42;
-    --focus: #8db89f;
-    --accent: #7c9f8f;
-    --accent-soft: #1f2e28;
-    --danger: #d97760;
-    --danger-soft: #2a1a16;
-  }
+/* Explicit light mode */
+html.light {
+  --paper: #fdfbf7;
+  --paper-deep: #f7f3eb;
+  --ink: #27241f;
+  --ink-soft: #6b665f;
+  --line: #ddd6ca;
+  --line-strong: #cfc5b7;
+  --focus: #6f8572;
+  --accent: #7c8f7f;
+  --accent-soft: #eff4ee;
+  --danger: #ad5f50;
+  --danger-soft: #faf0ee;
 }
 
-/* Explicit dark mode class (respects user preference) */
-.dark {
+/* Explicit dark mode */
+html.dark {
   --paper: #1a1815;
   --paper-deep: #0f0d0a;
   --ink: #f5f3f0;
@@ -54,19 +51,21 @@
   --danger-soft: #2a1a16;
 }
 
-/* Light mode override */
-.light {
-  --paper: #fdfbf7;
-  --paper-deep: #f7f3eb;
-  --ink: #27241f;
-  --ink-soft: #6b665f;
-  --line: #ddd6ca;
-  --line-strong: #cfc5b7;
-  --focus: #6f8572;
-  --accent: #7c8f7f;
-  --accent-soft: #eff4ee;
-  --danger: #ad5f50;
-  --danger-soft: #faf0ee;
+/* System dark mode preference (only if no explicit class set) */
+@media (prefers-color-scheme: dark) {
+  html:not(.light) {
+    --paper: #1a1815;
+    --paper-deep: #0f0d0a;
+    --ink: #f5f3f0;
+    --ink-soft: #b8b4ad;
+    --line: #3a3530;
+    --line-strong: #504a42;
+    --focus: #8db89f;
+    --accent: #7c9f8f;
+    --accent-soft: #1f2e28;
+    --danger: #d97760;
+    --danger-soft: #2a1a16;
+  }
 }
 
 body {

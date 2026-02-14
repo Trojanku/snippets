@@ -4,28 +4,32 @@ export function ThemeToggle() {
   const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
 
   useEffect(() => {
-    // Load saved preference
+    // Load saved preference or default to system
     const saved = localStorage.getItem("theme-preference") as "light" | "dark" | "system" | null;
     if (saved) {
       setTheme(saved);
     } else {
-      // Detect system preference
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      setTheme(prefersDark ? "dark" : "light");
+      // Default to system preference
+      setTheme("system");
     }
   }, []);
 
   useEffect(() => {
-    // Apply theme
-    const root = document.documentElement;
+    // Apply theme to html element
+    const html = document.documentElement;
     let activeTheme = theme;
 
     if (theme === "system") {
       activeTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     }
 
-    root.classList.remove("light", "dark");
-    root.classList.add(activeTheme);
+    // Remove all theme classes
+    html.classList.remove("light", "dark", "system");
+    
+    // Add active theme class
+    if (theme !== "system") {
+      html.classList.add(activeTheme);
+    }
 
     // Save preference
     localStorage.setItem("theme-preference", theme);
