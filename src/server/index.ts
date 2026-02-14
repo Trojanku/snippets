@@ -311,6 +311,7 @@ interface AgentJob {
   result?: string;
   startedAt: string;
   completedAt?: string;
+  sessionKey?: string;
 }
 const agentJobs = new Map<string, AgentJob>();
 
@@ -346,19 +347,47 @@ app.post("/api/agent-actions/:noteId/:actionIndex/run", async (req, res) => {
   patchNoteFrontmatter(noteId, { suggestedActions: actions });
   broadcast("notes-updated");
 
-  // Simulate background task (in real setup, this would spawn via OpenClaw)
+  // Queue action for processing via OpenClaw webhook
   const taskLabel = action.label || action.type;
-  const taskDescription = `Execute agent action: "${taskLabel}"\n\nNote ID: ${noteId}\nReturn the result/outcome concisely.`;
+  const taskPrompt = `Execute this Snippets agent action:\n\n**${taskLabel}**\n\nProvide result concisely (max 200 words). If successful, start with ✓. If it fails, explain why.`;
 
-  // Mark as completed after simulated work
-  setTimeout(() => {
-    job.status = "completed";
-    job.result = `[Agent executed] ${taskLabel}\n\nThis is a simulated result. In production, this would execute the actual task via OpenClaw.`;
-    job.completedAt = new Date().toISOString();
-    updateActionJobStatus(noteId, idx, job);
-    broadcast("notes-updated");
-    console.log(`[agent] Completed job ${jobId}: ${taskLabel}`);
-  }, 3000);
+  // Trigger task asynchronously in background
+  setTimeout(async () => {
+    try {
+      const triggerRes = await fetch(`${OPENCLAW_GATEWAY_URL}/hooks/agent`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${OPENCLAW_HOOKS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          name: `Snippets Action: ${taskLabel}`,
+          message: `Action ID: ${jobId}\n\n${taskPrompt}`,
+          wakeMode: "now",
+          deliver: false,
+        }),
+      });
+
+      if (triggerRes.ok || triggerRes.status === 202) {
+        console.log(`[agent] Queued action execution for job ${jobId}: ${taskLabel}`);
+        // Task is queued - it will execute in OpenClaw's environment
+        // For now, mark as in-progress
+      } else {
+        const errText = await triggerRes.text().catch(() => "Unknown error");
+        console.error(`[agent] Failed to queue task: ${triggerRes.status} ${errText}`);
+        job.status = "failed";
+        job.result = `Failed to queue: ${triggerRes.status}`;
+        job.completedAt = new Date().toISOString();
+        updateActionJobStatus(noteId, idx, job);
+      }
+    } catch (err) {
+      console.error(`[agent] Error queuing task:`, err);
+      job.status = "failed";
+      job.result = `Error: ${String(err)}`;
+      job.completedAt = new Date().toISOString();
+      updateActionJobStatus(noteId, idx, job);
+    }
+  }, 100);
 
   res.json({ ok: true, jobId, status: "running" });
 });
