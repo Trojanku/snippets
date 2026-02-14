@@ -29,6 +29,25 @@ export function NoteView() {
     setRunningActions({});
   }, [fm.id]);
 
+  useEffect(() => {
+    setRunningActions((prev) => {
+      const actions = fm.suggestedActions || [];
+      let changed = false;
+      const next = { ...prev };
+
+      for (const key of Object.keys(next)) {
+        const idx = Number(key);
+        const action = actions[idx];
+        if (!action || action.jobStatus !== "running") {
+          delete next[idx];
+          changed = true;
+        }
+      }
+
+      return changed ? next : prev;
+    });
+  }, [fm.suggestedActions, fm.updated]);
+
   async function handleRetry() {
     setRetrying(true);
     setRetryError(null);
@@ -93,12 +112,16 @@ export function NoteView() {
       }
 
       const pollInterval = setInterval(async () => {
-        const status = await api.checkAgentActionStatus(fm.id, actionIndex);
-        if (status?.status !== "running") {
-          clearInterval(pollInterval);
-          setRunningActions((prev) => ({ ...prev, [actionIndex]: false }));
-          await refresh();
-          await openNote(fm.id);
+        try {
+          const status = await api.checkAgentActionStatus(fm.id, actionIndex);
+          if (status?.status !== "running") {
+            clearInterval(pollInterval);
+            setRunningActions((prev) => ({ ...prev, [actionIndex]: false }));
+            await refresh();
+            await openNote(fm.id);
+          }
+        } catch {
+          // Keep polling; transient backend restarts should not freeze UI state.
         }
       }, 1000);
     } catch {
