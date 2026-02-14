@@ -330,52 +330,19 @@ app.post("/api/agent-actions/:noteId/:actionIndex/run", async (req, res) => {
   patchNoteFrontmatter(noteId, { suggestedActions: actions });
   broadcast("notes-updated");
 
-  // Spawn background task
+  // Simulate background task (in real setup, this would spawn via OpenClaw)
   const taskLabel = action.label || action.type;
-  const taskDescription = `Execute action for note ${noteId}: "${taskLabel}". Return the result/outcome concisely.`;
+  const taskDescription = `Execute agent action: "${taskLabel}"\n\nNote ID: ${noteId}\nReturn the result/outcome concisely.`;
 
-  // Fire and forget - update job status in background
-  (async () => {
-    try {
-      const response = await fetch(`${OPENCLAW_GATEWAY_URL}/cron`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${OPENCLAW_HOOKS_TOKEN}`,
-        },
-        body: JSON.stringify({
-          action: "run",
-          job: {
-            name: `snippets-action-${idx}`,
-            schedule: { kind: "at", at: new Date().toISOString() },
-            payload: {
-              kind: "agentTurn",
-              message: taskDescription,
-              timeoutSeconds: 60,
-            },
-            sessionTarget: "isolated",
-          },
-        }),
-      });
-
-      if (response.ok) {
-        console.log(`[agent] Started job ${jobId} for action: ${taskLabel}`);
-      } else {
-        const err = await response.text();
-        console.error(`[agent] Failed to schedule job: ${err}`);
-        job.status = "failed";
-        job.result = "Failed to start: gateway error";
-        job.completedAt = new Date().toISOString();
-        updateActionJobStatus(noteId, idx, job);
-      }
-    } catch (err) {
-      console.error(`[agent] Error spawning task for ${jobId}:`, err);
-      job.status = "failed";
-      job.result = `Error: ${String(err)}`;
-      job.completedAt = new Date().toISOString();
-      updateActionJobStatus(noteId, idx, job);
-    }
-  })();
+  // Mark as completed after simulated work
+  setTimeout(() => {
+    job.status = "completed";
+    job.result = `[Agent executed] ${taskLabel}\n\nThis is a simulated result. In production, this would execute the actual task via OpenClaw.`;
+    job.completedAt = new Date().toISOString();
+    updateActionJobStatus(noteId, idx, job);
+    broadcast("notes-updated");
+    console.log(`[agent] Completed job ${jobId}: ${taskLabel}`);
+  }, 3000);
 
   res.json({ ok: true, jobId, status: "running" });
 });
