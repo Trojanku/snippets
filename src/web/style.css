@@ -136,6 +136,29 @@ body {
   font-size: 13px;
 }
 
+/* --- Filters --- */
+
+.filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.filter-input,
+.filter-select {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.filter-input {
+  min-width: 240px;
+  flex: 1;
+}
+
 /* --- Capture --- */
 
 .capture {
@@ -311,6 +334,36 @@ body {
 .action-clear {
   background: #ecfdf5;
   color: #166534;
+}
+
+.retry-box {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.retry-error {
+  color: #991b1b;
+  font-size: 13px;
+}
+
+.retry-btn {
+  border: none;
+  background: #dc2626;
+  color: white;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.retry-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* --- Note View --- */

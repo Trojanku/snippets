@@ -20,10 +20,11 @@ const PENDING_DIR = path.resolve(".agent/pending");
 const OPENCLAW_GATEWAY_URL = process.env.OPENCLAW_GATEWAY_URL || "http://localhost:18789";
 const OPENCLAW_HOOKS_TOKEN = process.env.OPENCLAW_HOOKS_TOKEN || "snippets-hook-secret-2026";
 
-async function triggerAgent(noteId: string) {
+async function triggerAgent(noteId: string): Promise<{ ok: boolean; error?: string }> {
   if (!OPENCLAW_HOOKS_TOKEN) {
-    console.log("[openclaw] No hooks token configured, skipping trigger");
-    return;
+    const error = "No hooks token configured";
+    console.log(`[openclaw] ${error}`);
+    return { ok: false, error };
   }
 
   try {
@@ -44,12 +45,17 @@ async function triggerAgent(noteId: string) {
 
     if (response.ok || response.status === 202) {
       console.log(`[openclaw] Triggered agent for note ${noteId}`);
-    } else {
-      const body = await response.text();
-      console.log(`[openclaw] Failed to trigger: ${response.status} ${body}`);
+      return { ok: true };
     }
+
+    const body = await response.text();
+    const error = `Trigger failed: ${response.status} ${body}`;
+    console.log(`[openclaw] ${error}`);
+    return { ok: false, error };
   } catch (err) {
-    console.log(`[openclaw] Trigger error: ${err}`);
+    const error = `Trigger error: ${String(err)}`;
+    console.log(`[openclaw] ${error}`);
+    return { ok: false, error };
   }
 }
 
@@ -110,8 +116,11 @@ app.post("/api/notes", async (req, res) => {
   console.log(`[queue] Note ${note.frontmatter.id} queued for processing`);
 
   // Trigger OpenClaw agent immediately
-  triggerAgent(note.frontmatter.id);
-  
+  const result = await triggerAgent(note.frontmatter.id);
+  if (!result.ok) {
+    setNoteStatus(note.frontmatter.id, "failed", result.error || "trigger failed");
+  }
+
   res.status(201).json(note);
 });
 
@@ -124,6 +133,25 @@ app.get("/api/pending", (_req, res) => {
   }
   const pending = fs.readdirSync(PENDING_DIR);
   res.json(pending);
+});
+
+app.post("/api/notes/:id/retry", async (req, res) => {
+  const id = req.params.id;
+  const note = getNote(id);
+  if (!note) return res.status(404).json({ error: "Note not found" });
+
+  fs.mkdirSync(PENDING_DIR, { recursive: true });
+  fs.writeFileSync(path.join(PENDING_DIR, id), "");
+  setNoteStatus(id, "queued");
+  console.log(`[queue] Note ${id} queued for retry`);
+
+  const result = await triggerAgent(id);
+  if (!result.ok) {
+    setNoteStatus(id, "failed", result.error || "retry trigger failed");
+    return res.status(502).json({ ok: false, error: result.error || "retry trigger failed" });
+  }
+
+  res.json({ ok: true });
 });
 
 app.post("/api/pending/:id/start", (req, res) => {

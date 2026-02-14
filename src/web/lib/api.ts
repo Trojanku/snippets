@@ -53,6 +53,14 @@ export const api = {
     return res.json();
   },
   getConnections: () => json<ConnectionGraph>("/connections"),
+  retryNote: async (id: string): Promise<{ ok: boolean; error?: string }> => {
+    const res = await fetch(`${BASE}/notes/${encodeURIComponent(id)}/retry`, {
+      method: "POST",
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { ok: false, error: body?.error || `API error: ${res.status}` };
+    return body;
+  },
   getMemory: () => json<{ content: string }>("/memory"),
   getMission: () => json<{ content: string }>("/mission"),
 };

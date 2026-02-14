@@ -1,12 +1,28 @@
 import Markdown from "react-markdown";
+import { useState } from "react";
 import { useApp } from "../App.tsx";
+import { api } from "../lib/api.ts";
 
 export function NoteView() {
-  const { state } = useApp();
+  const { state, openNote, refresh } = useApp();
   const note = state.activeNote;
+  const [retrying, setRetrying] = useState(false);
+  const [retryError, setRetryError] = useState<string | null>(null);
   if (!note) return null;
 
   const { frontmatter: fm, content } = note;
+
+  async function handleRetry() {
+    setRetrying(true);
+    setRetryError(null);
+    const res = await api.retryNote(fm.id);
+    if (!res.ok) {
+      setRetryError(res.error || "Retry failed");
+    }
+    await refresh();
+    openNote(fm.id);
+    setRetrying(false);
+  }
 
   return (
     <div className="note-view">
@@ -34,6 +50,16 @@ export function NoteView() {
       )}
 
       {fm.summary && <blockquote className="note-summary">{fm.summary}</blockquote>}
+
+      {(fm.status === "failed" || fm.processingError) && (
+        <div className="retry-box">
+          <p className="retry-error">Processing failed: {fm.processingError || "unknown error"}</p>
+          <button className="retry-btn" onClick={handleRetry} disabled={retrying}>
+            {retrying ? "Retrying..." : "Retry processing"}
+          </button>
+          {retryError && <p className="retry-error">{retryError}</p>}
+        </div>
+      )}
 
       <div className="note-content">
         <Markdown>{content}</Markdown>
