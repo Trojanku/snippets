@@ -246,7 +246,7 @@ export function NoteView() {
               const isAgent = a.assignee === "agent";
               const isCompleted = a.status === "completed";
               const isPriority = a.priority === "high";
-              const isRunning = a.jobStatus === "running" || runningActions[i];
+              const isRunning = !isCompleted && (a.jobStatus === "running" || runningActions[i]);
 
               return (
                 <div
