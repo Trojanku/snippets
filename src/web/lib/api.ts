@@ -14,6 +14,7 @@ export interface NoteSummary {
     assignee?: "user" | "agent";
     priority?: "low" | "medium" | "high";
     status?: "pending" | "completed" | "declined";
+    result?: string;
   }[];
   status?: string;
   kind?: "knowledge" | "action" | "idea" | "journal" | "reference" | string;
@@ -121,6 +122,11 @@ export const api = {
   },
   getMemory: () => json<{ content: string }>("/memory"),
   getMission: () => json<{ content: string }>("/mission"),
+  getUserActions: () => json("/user-actions"),
+  completeAction: (noteId: string, actionIndex: number, result?: string) =>
+    json(`/user-actions/${encodeURIComponent(noteId)}/${actionIndex}/complete`, "POST", { result }),
+  declineAction: (noteId: string, actionIndex: number) =>
+    json(`/user-actions/${encodeURIComponent(noteId)}/${actionIndex}/decline`, "POST"),
 };
 
 export type SSEHandler = (event: string, data: string) => void;

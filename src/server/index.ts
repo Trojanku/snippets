@@ -212,6 +212,81 @@ app.post("/api/pending/:id/start", (req, res) => {
   res.status(204).send();
 });
 
+app.get("/api/user-actions", (_req, res) => {
+  const notes = listNotes();
+  const userActions: {
+    noteId: string;
+    noteTitle?: string;
+    actionIndex: number;
+    label: string;
+    priority?: string;
+    status: string;
+  }[] = [];
+
+  for (const note of notes) {
+    const actions = note.frontmatter.suggestedActions || [];
+    for (let i = 0; i < actions.length; i++) {
+      const action = actions[i];
+      if (action.assignee === "user") {
+        userActions.push({
+          noteId: note.frontmatter.id,
+          noteTitle: note.frontmatter.title,
+          actionIndex: i,
+          label: action.label,
+          priority: action.priority,
+          status: action.status || "pending",
+        });
+      }
+    }
+  }
+
+  res.json(userActions);
+});
+
+app.post("/api/user-actions/:noteId/:actionIndex/complete", (req, res) => {
+  const { noteId, actionIndex } = req.params;
+  const { result } = req.body;
+
+  const note = getNote(noteId);
+  if (!note) return res.status(404).json({ error: "Note not found" });
+
+  const actions = note.frontmatter.suggestedActions || [];
+  const idx = parseInt(actionIndex, 10);
+  if (idx < 0 || idx >= actions.length) {
+    return res.status(400).json({ error: "Action index out of range" });
+  }
+
+  actions[idx].status = "completed";
+  if (result) actions[idx].result = result;
+
+  const updated = patchNoteFrontmatter(noteId, { suggestedActions: actions });
+  if (!updated) return res.status(500).json({ error: "Failed to update action" });
+
+  broadcast("notes-updated");
+  res.json({ ok: true, action: actions[idx] });
+});
+
+app.post("/api/user-actions/:noteId/:actionIndex/decline", (req, res) => {
+  const { noteId, actionIndex } = req.params;
+
+  const note = getNote(noteId);
+  if (!note) return res.status(404).json({ error: "Note not found" });
+
+  const actions = note.frontmatter.suggestedActions || [];
+  const idx = parseInt(actionIndex, 10);
+  if (idx < 0 || idx >= actions.length) {
+    return res.status(400).json({ error: "Action index out of range" });
+  }
+
+  actions[idx].status = "declined";
+
+  const updated = patchNoteFrontmatter(noteId, { suggestedActions: actions });
+  if (!updated) return res.status(500).json({ error: "Failed to update action" });
+
+  broadcast("notes-updated");
+  res.json({ ok: true, action: actions[idx] });
+});
+
 app.delete("/api/pending/:id", (req, res) => {
   // Mark note as processed (remove from queue)
   const id = req.params.id;

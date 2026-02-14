@@ -32,6 +32,7 @@ export interface NoteFrontmatter {
     assignee?: "user" | "agent";
     priority?: "low" | "medium" | "high";
     status?: "pending" | "completed" | "declined";
+    result?: string;
   }[];
   status?: "raw" | "queued" | "processing" | "processed" | "failed" | string;
   kind?: "knowledge" | "action" | "idea" | "journal" | "reference" | string;

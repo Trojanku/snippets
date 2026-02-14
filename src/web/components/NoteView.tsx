@@ -3,6 +3,11 @@ import { useState } from "react";
 import { useApp } from "../App.tsx";
 import { api } from "../lib/api.ts";
 
+interface ActionEditState {
+  actionIndex: number;
+  result: string;
+}
+
 export function NoteView() {
   const { state, openNote, refresh } = useApp();
   const note = state.activeNote;
@@ -11,6 +16,7 @@ export function NoteView() {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
+  const [actionEditing, setActionEditing] = useState<ActionEditState | null>(null);
 
   if (!note) return null;
 
@@ -55,6 +61,19 @@ export function NoteView() {
   function handleCancelEdit() {
     setIsEditing(false);
     setEditedContent("");
+  }
+
+  async function handleCompleteAction(actionIndex: number, result?: string) {
+    await api.completeAction(fm.id, actionIndex, result);
+    await refresh();
+    await openNote(fm.id);
+    setActionEditing(null);
+  }
+
+  async function handleDeclineAction(actionIndex: number) {
+    await api.declineAction(fm.id, actionIndex);
+    await refresh();
+    await openNote(fm.id);
   }
 
   return (
@@ -150,18 +169,63 @@ export function NoteView() {
                     {isPriority && <span className="action-priority">High</span>}
                   </div>
                   <p className="action-label">{a.label}</p>
-                  <div className="action-controls">
-                    {isAgent && !isCompleted && (
-                      <button className="action-run-btn" title="Run this action">
-                        Run →
-                      </button>
-                    )}
-                    {!isCompleted && (
-                      <button className="action-done-btn" title="Mark as done">
-                        Done ✓
-                      </button>
-                    )}
-                  </div>
+                  {a.result && <p className="action-result">✓ {a.result}</p>}
+                  {actionEditing?.actionIndex === i ? (
+                    <div className="action-edit">
+                      <textarea
+                        className="action-result-input"
+                        value={actionEditing.result}
+                        onChange={(e) =>
+                          setActionEditing({ ...actionEditing, result: e.target.value })
+                        }
+                        placeholder="What's the result/outcome? (optional)"
+                      />
+                      <div className="action-edit-controls">
+                        <button
+                          className="action-save-result-btn"
+                          onClick={() =>
+                            handleCompleteAction(i, actionEditing.result || undefined)
+                          }
+                        >
+                          Done ✓
+                        </button>
+                        <button
+                          className="action-cancel-result-btn"
+                          onClick={() => setActionEditing(null)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="action-controls">
+                      {isAgent && !isCompleted && (
+                        <button className="action-run-btn" title="Run this action">
+                          Run →
+                        </button>
+                      )}
+                      {!isCompleted && (
+                        <button
+                          className="action-done-btn"
+                          title="Mark as done"
+                          onClick={() =>
+                            setActionEditing({ actionIndex: i, result: a.result || "" })
+                          }
+                        >
+                          Done ✓
+                        </button>
+                      )}
+                      {!isCompleted && (
+                        <button
+                          className="action-decline-btn"
+                          title="Skip this action"
+                          onClick={() => handleDeclineAction(i)}
+                        >
+                          Skip
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

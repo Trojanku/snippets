@@ -861,8 +861,50 @@ body {
   margin-top: 6px;
 }
 
+.action-result {
+  font-size: 13px;
+  color: #365b39;
+  font-style: italic;
+  margin: 0;
+}
+
+.action-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.action-result-input {
+  font-size: 12px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: white;
+  color: var(--ink);
+  min-height: 50px;
+  resize: vertical;
+  font-family: var(--sans);
+}
+
+.action-result-input::placeholder {
+  color: var(--ink-soft);
+}
+
+.action-result-input:focus {
+  outline: 2px solid var(--focus);
+  outline-offset: -1px;
+}
+
+.action-edit-controls {
+  display: flex;
+  gap: 8px;
+}
+
 .action-run-btn,
-.action-done-btn {
+.action-done-btn,
+.action-decline-btn,
+.action-save-result-btn,
+.action-cancel-result-btn {
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -881,9 +923,26 @@ body {
   border-color: #2f4335;
 }
 
-.action-done-btn:hover {
+.action-done-btn:hover,
+.action-save-result-btn:hover {
   background: rgba(61, 81, 67, 0.1);
   color: #365b39;
+}
+
+.action-decline-btn:hover,
+.action-cancel-result-btn:hover {
+  background: rgba(255, 0, 0, 0.05);
+  color: #d4534f;
+}
+
+.action-save-result-btn {
+  background: #3d5143;
+  color: #f6f8f5;
+  border-color: #2f4335;
+}
+
+.action-save-result-btn:hover {
+  background: #4a6351;
 }
 
 .action-chips {
