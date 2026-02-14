@@ -474,6 +474,8 @@ app.post("/api/agent-actions/:noteId/:actionIndex/complete", (req, res) => {
     job.result = resultText;
   } else if (status === "failed" && !job.result) {
     job.result = "Action failed in hook execution.";
+  } else if (status === "completed" && !job.result) {
+    job.result = "Completed. Result was delivered via hook output.";
   }
 
   updateActionJobStatus(noteId, idx, job);
