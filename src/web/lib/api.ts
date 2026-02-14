@@ -57,6 +57,17 @@ export interface NotesTreeFolderNode {
   children: NotesTreeNode[];
 }
 
+export interface AgentStatus {
+  state: "online" | "degraded" | "offline";
+  available: boolean;
+  listening: boolean;
+  pendingQueue: number;
+  runningJobs: number;
+  lastTriggerAt?: string;
+  lastSuccessAt?: string;
+  lastError?: string;
+}
+
 export interface NotesTreeNoteNode {
   type: "note";
   name: string;
@@ -126,6 +137,7 @@ export const api = {
   },
   getMemory: () => json<{ content: string }>("/memory"),
   getMission: () => json<{ content: string }>("/mission"),
+  getAgentStatus: () => json<AgentStatus>("/agent/status"),
   getUserActions: () => json("/user-actions"),
   completeAction: async (noteId: string, actionIndex: number, result?: string) => {
     const res = await fetch(`${BASE}/user-actions/${encodeURIComponent(noteId)}/${actionIndex}/complete`, {

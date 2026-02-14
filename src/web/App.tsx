@@ -20,6 +20,7 @@ import { Sidebar } from "./components/Sidebar.tsx";
 import { TaskList } from "./components/TaskList.tsx";
 import { ThemeToggle } from "./components/ThemeToggle.tsx";
 import { ConnectionsPanel } from "./components/ConnectionsPanel.tsx";
+import { AgentStatusWidget } from "./components/AgentStatusWidget.tsx";
 
 type View = "capture" | "list" | "note" | "tasks";
 
@@ -204,6 +205,7 @@ export function App() {
                 Tasks
               </button>
             </div>
+            <AgentStatusWidget />
             <ThemeToggle />
           </div>
         </nav>

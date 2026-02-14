@@ -197,6 +197,31 @@ html.dark {
     @apply text-focus;
   }
 
+  .action-result-content p,
+  .action-result-content ul,
+  .action-result-content ol,
+  .action-result-content blockquote {
+    margin: 0 0 0.7em;
+  }
+
+  .action-result-content ul,
+  .action-result-content ol {
+    padding-left: 1.2rem;
+  }
+
+  .action-result-content code {
+    @apply bg-paper-deep/80 px-1 py-0.5 rounded;
+    font-size: 0.85em;
+  }
+
+  .action-result-content pre {
+    @apply rounded-md border border-line/70 bg-paper/60 p-2 overflow-x-auto;
+  }
+
+  .action-result-content a {
+    @apply text-focus underline underline-offset-2;
+  }
+
   .tree-node {
     @apply space-y-1;
   }

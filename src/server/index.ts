@@ -29,10 +29,41 @@ const AGENT_JOBS_PATH = path.resolve(".agent/agent-jobs.json");
 const OPENCLAW_GATEWAY_URL = process.env.OPENCLAW_GATEWAY_URL || "http://localhost:18789";
 const OPENCLAW_HOOKS_TOKEN = process.env.OPENCLAW_HOOKS_TOKEN || "snippets-hook-secret-2026";
 
+interface AgentConnectivityState {
+  lastTriggerAt?: string;
+  lastSuccessAt?: string;
+  lastError?: string;
+  lastTriggerOk?: boolean;
+}
+
+const agentConnectivity: AgentConnectivityState = {};
+
+function markAgentTrigger(ok: boolean, error?: string) {
+  const now = new Date().toISOString();
+  agentConnectivity.lastTriggerAt = now;
+  agentConnectivity.lastTriggerOk = ok;
+  if (ok) {
+    agentConnectivity.lastSuccessAt = now;
+    agentConnectivity.lastError = undefined;
+  } else {
+    agentConnectivity.lastError = error || "Unknown trigger error";
+  }
+}
+
+function getPendingCount(): number {
+  try {
+    if (!fs.existsSync(PENDING_DIR)) return 0;
+    return fs.readdirSync(PENDING_DIR).length;
+  } catch {
+    return 0;
+  }
+}
+
 async function triggerAgent(noteId: string): Promise<{ ok: boolean; error?: string }> {
   if (!OPENCLAW_HOOKS_TOKEN) {
     const error = "No hooks token configured";
     console.log(`[openclaw] ${error}`);
+    markAgentTrigger(false, error);
     return { ok: false, error };
   }
 
@@ -54,16 +85,19 @@ async function triggerAgent(noteId: string): Promise<{ ok: boolean; error?: stri
 
     if (response.ok || response.status === 202) {
       console.log(`[openclaw] Triggered agent for note ${noteId}`);
+      markAgentTrigger(true);
       return { ok: true };
     }
 
     const body = await response.text();
     const error = `Trigger failed: ${response.status} ${body}`;
     console.log(`[openclaw] ${error}`);
+    markAgentTrigger(false, error);
     return { ok: false, error };
   } catch (err) {
     const error = `Trigger error: ${String(err)}`;
     console.log(`[openclaw] ${error}`);
+    markAgentTrigger(false, error);
     return { ok: false, error };
   }
 }
@@ -400,16 +434,21 @@ app.post("/api/agent-actions/:noteId/:actionIndex/run", async (req, res) => {
 
       if (triggerRes.ok || triggerRes.status === 202) {
         console.log(`[agent] Queued action execution for job ${jobId}: ${taskLabel}`);
+        markAgentTrigger(true);
       } else {
         const errText = await triggerRes.text().catch(() => "Unknown error");
-        console.error(`[agent] Failed to queue task: ${triggerRes.status} ${errText}`);
+        const triggerError = `Failed to queue action: ${triggerRes.status} ${errText}`;
+        console.error(`[agent] ${triggerError}`);
+        markAgentTrigger(false, triggerError);
         job.status = "failed";
         job.result = `Failed to queue: ${triggerRes.status}`;
         job.completedAt = new Date().toISOString();
         updateActionJobStatus(noteId, idx, job);
       }
     } catch (err) {
-      console.error(`[agent] Error queuing task:`, err);
+      const triggerError = `Error queuing action: ${String(err)}`;
+      console.error(`[agent] ${triggerError}`);
+      markAgentTrigger(false, triggerError);
       job.status = "failed";
       job.result = `Error: ${String(err)}`;
       job.completedAt = new Date().toISOString();
@@ -580,6 +619,29 @@ app.get("/api/memory", (_req, res) => {
 
 app.get("/api/mission", (_req, res) => {
   res.json({ content: getMission() });
+});
+
+app.get("/api/agent/status", (_req, res) => {
+  const hasHooksToken = Boolean(OPENCLAW_HOOKS_TOKEN);
+  const runningJobs = [...agentJobs.values()].filter((job) => job.status === "running").length;
+  const pendingQueue = getPendingCount();
+
+  const state: "online" | "degraded" | "offline" = !hasHooksToken
+    ? "offline"
+    : agentConnectivity.lastTriggerOk === false
+      ? "degraded"
+      : "online";
+
+  res.json({
+    state,
+    available: hasHooksToken,
+    listening: true,
+    pendingQueue,
+    runningJobs,
+    lastTriggerAt: agentConnectivity.lastTriggerAt,
+    lastSuccessAt: agentConnectivity.lastSuccessAt,
+    lastError: agentConnectivity.lastError,
+  });
 });
 
 // --- Chokidar Watcher ---

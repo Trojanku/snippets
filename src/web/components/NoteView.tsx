@@ -270,6 +270,7 @@ export function NoteView() {
               const isCompleted = a.status === "completed";
               const isPriority = a.priority === "high";
               const isRunning = !isCompleted && (a.jobStatus === "running" || runningActions[i]);
+              const statusLabel = isCompleted ? "Completed" : isRunning ? "Running" : "Pending";
 
               return (
                 <div
@@ -285,11 +286,9 @@ export function NoteView() {
                       {isAgent ? "Agent" : "You"}
                     </span>
                     <div className="flex items-center gap-1.5">
-                      {isCompleted && (
-                        <span className="rounded-full border border-accent/45 bg-accent-soft/45 px-2 py-0.5 text-[11px] uppercase tracking-widest text-ink">
-                          Done
-                        </span>
-                      )}
+                      <span className={`status ${isCompleted ? "status-processed" : isRunning ? "status-processing" : "status-queued"}`}>
+                        {statusLabel}
+                      </span>
                       {isPriority && (
                         <span className="rounded-full border border-caution/50 bg-caution/15 px-2 py-0.5 text-xs uppercase tracking-widest text-caution">
                           High
@@ -304,7 +303,9 @@ export function NoteView() {
                   {a.result && (
                     <div className="rounded-lg border border-accent/45 bg-accent-soft/25 px-3 py-2.5">
                       <p className="mb-1 text-[11px] uppercase tracking-widest text-ink-soft">Result</p>
-                      <p className="whitespace-pre-line text-sm leading-1.6 text-ink">{a.result}</p>
+                      <div className="action-result-content text-sm leading-1.6 text-ink">
+                        <Markdown>{a.result}</Markdown>
+                      </div>
                     </div>
                   )}
 
