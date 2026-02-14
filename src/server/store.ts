@@ -303,6 +303,30 @@ export function markNoteSeen(id: string): Note | null {
   return patchNoteFrontmatter(id, { seenAt: new Date().toISOString() });
 }
 
+export function saveNoteContent(id: string, newContent: string): Note | null {
+  const file = findNoteFileById(id);
+  if (!file) return null;
+
+  const note = parseNote(file);
+  if (!note) return null;
+
+  const newFm: NoteFrontmatter = {
+    ...note.frontmatter,
+    updated: new Date().toISOString(),
+    status: "queued",
+  };
+
+  const newRaw = matter.stringify(newContent.trim(), newFm);
+  try {
+    fs.writeFileSync(file, newRaw, "utf-8");
+    addToPendingQueue(id);
+    broadcastSSE("notes-updated");
+    return parseNote(file);
+  } catch {
+    return null;
+  }
+}
+
 function buildTree(absDir: string, relDir: string): NotesTreeFolderNode {
   const folderName = relDir === "" ? "notes" : path.basename(relDir);
   const node: NotesTreeFolderNode = {

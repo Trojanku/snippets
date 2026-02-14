@@ -13,6 +13,7 @@ import {
   getMission,
   setNoteStatus,
   markNoteSeen,
+  saveNoteContent,
   getNotesTree,
   moveNoteToFolder,
   ensureNoteFolders,
@@ -112,6 +113,21 @@ app.post("/api/notes/:id/seen", (req, res) => {
   if (!note) return res.status(404).json({ error: "Note not found" });
   markNoteSeen(id);
   res.json({ ok: true });
+});
+
+app.patch("/api/notes/:id", (req, res) => {
+  const id = req.params.id;
+  const { content } = req.body;
+  
+  if (!content) return res.status(400).json({ error: "content required" });
+  
+  const note = getNote(id);
+  if (!note) return res.status(404).json({ error: "Note not found" });
+  
+  const updated = saveNoteContent(id, content);
+  if (!updated) return res.status(500).json({ error: "Failed to save note" });
+  
+  res.json(updated);
 });
 
 app.get("/api/tree", (_req, res) => {

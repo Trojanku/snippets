@@ -59,12 +59,15 @@ curl -s -X DELETE http://localhost:3811/api/pending/<id>
 
 For each pending note ID:
 1. `POST /api/pending/<id>/start` (sets `status: processing`)
-2. Read note
-3. Classify + choose destination folderPath
-4. Enrich frontmatter
-5. Move note to folder (`POST /api/notes/<id>/move`)
-6. Update graph connections
-7. `DELETE /api/pending/<id>` (sets `status: processed` + removes queue entry)
+2. Read note with `GET /api/notes/<id>`
+3. Analyze content (new notes or edited notes)
+4. Classify + choose destination folderPath
+5. Enrich frontmatter (title, summary, themes, kind, actionability)
+6. Move note to folder (`POST /api/notes/<id>/move`)
+7. Update graph connections
+8. `DELETE /api/pending/<id>` (sets `status: processed` + removes queue entry)
+
+**Note on edited notes:** When a user edits a note and saves, it's automatically re-queued with `status: queued`. Re-process it normally — you may detect changes in categorization, themes, or actionability. The graph will be updated with any new connections.
 
 ## Frontmatter schema
 

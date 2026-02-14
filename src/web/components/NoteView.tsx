@@ -8,6 +8,10 @@ export function NoteView() {
   const note = state.activeNote;
   const [retrying, setRetrying] = useState(false);
   const [retryError, setRetryError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState<string>("");
+  const [isSaving, setIsSaving] = useState(false);
+
   if (!note) return null;
 
   const { frontmatter: fm, content } = note;
@@ -24,10 +28,49 @@ export function NoteView() {
     setRetrying(false);
   }
 
+  async function handleStartEdit() {
+    setEditedContent(content);
+    setIsEditing(true);
+  }
+
+  async function handleSaveEdit() {
+    if (editedContent.trim() === content.trim()) {
+      setIsEditing(false);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const updated = await api.saveNote(fm.id, editedContent);
+      if (updated) {
+        await refresh();
+        openNote(fm.id);
+        setIsEditing(false);
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  function handleCancelEdit() {
+    setIsEditing(false);
+    setEditedContent("");
+  }
+
   return (
     <div className="note-view">
-      <h1>{fm.title || fm.id}</h1>
-      {fm.folderPath && <div className="note-path note-path-detail">{fm.folderPath}</div>}
+      <div className="note-view-header">
+        <div>
+          <h1>{fm.title || fm.id}</h1>
+          {fm.folderPath && <div className="note-path note-path-detail">{fm.folderPath}</div>}
+        </div>
+        {!isEditing && (
+          <button className="edit-btn" onClick={handleStartEdit} title="Edit note">
+            ✎
+          </button>
+        )}
+      </div>
+
       <div className="note-meta">
         <span>{new Date(fm.created).toLocaleString()}</span>
         {fm.status && (
@@ -62,11 +105,31 @@ export function NoteView() {
         </div>
       )}
 
-      <div className="note-content">
-        <Markdown>{content}</Markdown>
-      </div>
+      {isEditing ? (
+        <div className="note-edit-box">
+          <textarea
+            className="note-edit-area"
+            value={editedContent}
+            onChange={(e) => setEditedContent(e.target.value)}
+            placeholder="Edit note content..."
+          />
+          <div className="edit-actions">
+            <button className="save-btn" onClick={handleSaveEdit} disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save & Reprocess"}
+            </button>
+            <button className="cancel-btn" onClick={handleCancelEdit} disabled={isSaving}>
+              Cancel
+            </button>
+          </div>
+          <p className="edit-hint">Saving will trigger re-categorization to detect changes in themes, kind, and actionability.</p>
+        </div>
+      ) : (
+        <div className="note-content">
+          <Markdown>{content}</Markdown>
+        </div>
+      )}
 
-      {fm.suggestedActions && fm.suggestedActions.length > 0 && (
+      {fm.suggestedActions && fm.suggestedActions.length > 0 && !isEditing && (
         <div className="suggested-actions">
           <h3>Suggested Actions</h3>
           <div className="action-chips">

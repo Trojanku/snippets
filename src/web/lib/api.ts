@@ -67,6 +67,15 @@ async function json<T>(url: string): Promise<T> {
 export const api = {
   listNotes: () => json<NoteSummary[]>("/notes"),
   getNote: (id: string) => json<FullNote>(`/notes/${encodeURIComponent(id)}`),
+  saveNote: async (id: string, content: string): Promise<FullNote | null> => {
+    const res = await fetch(`${BASE}/notes/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    });
+    if (!res.ok) return null;
+    return res.json();
+  },
   markSeen: async (id: string): Promise<{ ok: boolean; error?: string }> => {
     const res = await fetch(`${BASE}/notes/${encodeURIComponent(id)}/seen`, {
       method: "POST",

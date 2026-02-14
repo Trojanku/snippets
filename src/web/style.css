@@ -596,6 +596,122 @@ body {
   border-radius: 16px;
 }
 
+.note-view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.note-view-header h1 {
+  margin-bottom: 0;
+}
+
+.edit-btn {
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 120ms ease;
+  flex-shrink: 0;
+}
+
+.edit-btn:hover {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: var(--focus);
+  color: var(--ink);
+}
+
+.note-edit-box {
+  margin: 12px 0;
+  padding: 18px;
+  background: linear-gradient(180deg, #fffef8 0%, #fcf9f2 100%);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.note-edit-area {
+  width: 100%;
+  min-height: 280px;
+  padding: 12px;
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--ink);
+  resize: vertical;
+}
+
+.note-edit-area::placeholder {
+  color: var(--ink-soft);
+}
+
+.note-edit-area:focus {
+  outline: 2px solid var(--focus);
+  outline-offset: -1px;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.save-btn,
+.cancel-btn {
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.save-btn {
+  background: #3d5143;
+  color: #f6f8f5;
+  border-color: #2f4335;
+}
+
+.save-btn:hover {
+  background: #4a6351;
+}
+
+.save-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cancel-btn {
+  background: transparent;
+  color: var(--ink-soft);
+}
+
+.cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--ink);
+}
+
+.cancel-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.edit-hint {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 10px;
+  font-style: italic;
+}
+
 .note-view h1 {
   font-family: var(--serif);
   font-size: clamp(30px, 4vw, 42px);
