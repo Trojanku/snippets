@@ -274,9 +274,9 @@ export function NoteView() {
               return (
                 <div
                   key={i}
-                  className={`flex flex-col gap-2 rounded-xl border px-3.5 py-3.5 ${
+                  className={`flex flex-col gap-2.5 rounded-xl border px-3.5 py-3.5 ${
                     isCompleted
-                      ? "border-line/70 bg-paper-deep/45 opacity-70"
+                      ? "border-accent/45 bg-accent-soft/20"
                       : "border-line/80 bg-paper/45"
                   }`}
                 >
@@ -284,17 +284,29 @@ export function NoteView() {
                     <span className="text-xs uppercase tracking-widest text-ink-soft">
                       {isAgent ? "Agent" : "You"}
                     </span>
-                    {isPriority && (
-                      <span className="rounded-full border border-caution/50 bg-caution/15 px-2 py-0.5 text-xs uppercase tracking-widest text-caution">
-                        High
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                      {isCompleted && (
+                        <span className="rounded-full border border-accent/45 bg-accent-soft/45 px-2 py-0.5 text-[11px] uppercase tracking-widest text-ink">
+                          Done
+                        </span>
+                      )}
+                      {isPriority && (
+                        <span className="rounded-full border border-caution/50 bg-caution/15 px-2 py-0.5 text-xs uppercase tracking-widest text-caution">
+                          High
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <p className="text-sm leading-1.5 text-ink">{a.label}</p>
                   {isRunning && (
-                    <p className="animate-pulse text-xs italic text-accent">Running...</p>
+                    <p className="animate-pulse text-xs font-semibold uppercase tracking-wider text-accent">Running…</p>
                   )}
-                  {a.result && <p className="text-sm italic text-success">{a.result}</p>}
+                  {a.result && (
+                    <div className="rounded-lg border border-accent/45 bg-accent-soft/25 px-3 py-2.5">
+                      <p className="mb-1 text-[11px] uppercase tracking-widest text-ink-soft">Result</p>
+                      <p className="whitespace-pre-line text-sm leading-1.6 text-ink">{a.result}</p>
+                    </div>
+                  )}
 
                   {actionEditing?.actionIndex === i ? (
                     <div className="flex flex-col gap-2">
