@@ -1,5 +1,5 @@
 import Markdown from "react-markdown";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useApp } from "../App.tsx";
 import { api } from "../lib/api.ts";
 
@@ -17,12 +17,17 @@ export function NoteView() {
   const [editedContent, setEditedContent] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
   const [actionEditing, setActionEditing] = useState<ActionEditState | null>(null);
+  const [runningActions, setRunningActions] = useState<Record<number, boolean>>({});
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   if (!note) return null;
 
   const { frontmatter: fm, content } = note;
+
+  useEffect(() => {
+    setRunningActions({});
+  }, [fm.id]);
 
   async function handleRetry() {
     setRetrying(true);
@@ -79,16 +84,25 @@ export function NoteView() {
   }
 
   async function handleRunAction(actionIndex: number) {
-    const result = await api.runAgentAction(fm.id, actionIndex);
-    if (result?.jobId) {
+    setRunningActions((prev) => ({ ...prev, [actionIndex]: true }));
+    try {
+      const result = await api.runAgentAction(fm.id, actionIndex);
+      if (!result?.jobId) {
+        setRunningActions((prev) => ({ ...prev, [actionIndex]: false }));
+        return;
+      }
+
       const pollInterval = setInterval(async () => {
         const status = await api.checkAgentActionStatus(fm.id, actionIndex);
-        if (status?.status === "completed" || status?.status === "failed") {
+        if (status?.status !== "running") {
           clearInterval(pollInterval);
+          setRunningActions((prev) => ({ ...prev, [actionIndex]: false }));
           await refresh();
           await openNote(fm.id);
         }
       }, 1000);
+    } catch {
+      setRunningActions((prev) => ({ ...prev, [actionIndex]: false }));
     }
   }
 
@@ -232,6 +246,7 @@ export function NoteView() {
               const isAgent = a.assignee === "agent";
               const isCompleted = a.status === "completed";
               const isPriority = a.priority === "high";
+              const isRunning = a.jobStatus === "running" || runningActions[i];
 
               return (
                 <div
@@ -253,7 +268,7 @@ export function NoteView() {
                     )}
                   </div>
                   <p className="text-sm leading-1.5 text-ink">{a.label}</p>
-                  {a.jobStatus === "running" && (
+                  {isRunning && (
                     <p className="animate-pulse text-xs italic text-accent">Running...</p>
                   )}
                   {a.result && <p className="text-sm italic text-success">{a.result}</p>}
@@ -282,12 +297,12 @@ export function NoteView() {
                     </div>
                   ) : (
                     <div className="flex flex-wrap gap-2">
-                      {isAgent && !isCompleted && !a.jobStatus && (
+                      {isAgent && !isCompleted && !isRunning && (
                         <button className="btn-muted" title="Run this action" onClick={() => handleRunAction(i)}>
                           Run
                         </button>
                       )}
-                      {a.jobStatus === "running" && (
+                      {isRunning && (
                         <button className="btn-muted" disabled>
                           Running...
                         </button>

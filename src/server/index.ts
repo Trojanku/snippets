@@ -23,6 +23,7 @@ import {
 } from "./store.js";
 
 const PENDING_DIR = path.resolve(".agent/pending");
+const AGENT_JOBS_PATH = path.resolve(".agent/agent-jobs.json");
 
 // OpenClaw integration
 const OPENCLAW_GATEWAY_URL = process.env.OPENCLAW_GATEWAY_URL || "http://localhost:18789";
@@ -313,8 +314,29 @@ interface AgentJob {
   startedAt: string;
   completedAt?: string;
   sessionKey?: string;
+  noteId: string;
+  actionIndex: number;
 }
 const agentJobs = new Map<string, AgentJob>();
+
+function loadAgentJobs(): void {
+  try {
+    const raw = fs.readFileSync(AGENT_JOBS_PATH, "utf-8");
+    const jobs = JSON.parse(raw) as AgentJob[];
+    for (const job of jobs) {
+      if (!job?.id) continue;
+      agentJobs.set(job.id, job);
+    }
+  } catch {
+    // no-op: missing file is expected on first run
+  }
+}
+
+function saveAgentJobs(): void {
+  fs.mkdirSync(path.dirname(AGENT_JOBS_PATH), { recursive: true });
+  const jobs = [...agentJobs.values()];
+  fs.writeFileSync(AGENT_JOBS_PATH, JSON.stringify(jobs, null, 2));
+}
 
 app.post("/api/agent-actions/:noteId/:actionIndex/run", async (req, res) => {
   const { noteId, actionIndex } = req.params;
@@ -337,9 +359,12 @@ app.post("/api/agent-actions/:noteId/:actionIndex/run", async (req, res) => {
     id: jobId,
     status: "running",
     startedAt: new Date().toISOString(),
+    noteId,
+    actionIndex: idx,
   };
 
   agentJobs.set(jobId, job);
+  saveAgentJobs();
 
   // Update action with job tracking
   actions[idx].jobId = jobId;
@@ -350,7 +375,11 @@ app.post("/api/agent-actions/:noteId/:actionIndex/run", async (req, res) => {
 
   // Queue action for processing via OpenClaw webhook
   const taskLabel = action.label || action.type;
-  const taskPrompt = `Execute this Snippets agent action:\n\n**${taskLabel}**\n\nProvide result concisely (max 200 words). If successful, start with ✓. If it fails, explain why.`;
+  const callbackUrl = `http://localhost:${PORT}/api/agent-actions/${encodeURIComponent(noteId)}/${idx}/complete`;
+  const completeCmd = `curl -sS -X POST '${callbackUrl}' -H 'Content-Type: application/json' -d '{"jobId":"${jobId}","status":"completed"}'`;
+  const failCmd = `curl -sS -X POST '${callbackUrl}' -H 'Content-Type: application/json' -d '{"jobId":"${jobId}","status":"failed"}'`;
+
+  const taskPrompt = `Execute this Snippets agent action:\n\n**${taskLabel}**\n\nIMPORTANT: when done, report status back to Snippets backend:\n- On success run exactly:\n${completeCmd}\n- On failure run exactly:\n${failCmd}\n\nAfter running the callback command, provide the user-facing result concisely (max 200 words). If successful, start with ✓. If it fails, explain why.`;
 
   // Trigger task asynchronously in background
   setTimeout(async () => {
@@ -371,8 +400,6 @@ app.post("/api/agent-actions/:noteId/:actionIndex/run", async (req, res) => {
 
       if (triggerRes.ok || triggerRes.status === 202) {
         console.log(`[agent] Queued action execution for job ${jobId}: ${taskLabel}`);
-        // Task is queued - it will execute in OpenClaw's environment
-        // For now, mark as in-progress
       } else {
         const errText = await triggerRes.text().catch(() => "Unknown error");
         console.error(`[agent] Failed to queue task: ${triggerRes.status} ${errText}`);
@@ -390,7 +417,67 @@ app.post("/api/agent-actions/:noteId/:actionIndex/run", async (req, res) => {
     }
   }, 100);
 
+  // Guard against forever-running UI if callback never comes back.
+  setTimeout(() => {
+    const current = agentJobs.get(jobId);
+    if (!current || current.status !== "running") return;
+
+    current.status = "failed";
+    current.completedAt = new Date().toISOString();
+    if (!current.result) {
+      current.result = "Timed out waiting for action completion callback. Please rerun.";
+    }
+    updateActionJobStatus(noteId, idx, current);
+  }, 15 * 60 * 1000);
+
   res.json({ ok: true, jobId, status: "running" });
+});
+
+app.post("/api/agent-actions/:noteId/:actionIndex/complete", (req, res) => {
+  const { noteId, actionIndex } = req.params;
+  const idx = parseInt(actionIndex, 10);
+  const note = getNote(noteId);
+  if (!note) return res.status(404).json({ error: "Note not found" });
+
+  const actions = note.frontmatter.suggestedActions || [];
+  if (idx < 0 || idx >= actions.length) {
+    return res.status(400).json({ error: "Action index out of range" });
+  }
+
+  const action = actions[idx];
+  const status = req.body?.status === "failed" ? "failed" : "completed";
+  const incomingJobId = typeof req.body?.jobId === "string" ? req.body.jobId : undefined;
+  const jobId = action.jobId;
+
+  if (!jobId) {
+    return res.status(400).json({ error: "No job is associated with this action" });
+  }
+
+  if (incomingJobId && incomingJobId !== jobId) {
+    return res.status(409).json({ error: "Job ID mismatch" });
+  }
+
+  const job: AgentJob =
+    agentJobs.get(jobId) || {
+      id: jobId,
+      status,
+      startedAt: action.jobStartedAt || new Date().toISOString(),
+      noteId,
+      actionIndex: idx,
+    };
+
+  job.status = status;
+  job.completedAt = new Date().toISOString();
+
+  const resultText = typeof req.body?.result === "string" ? req.body.result.trim() : "";
+  if (resultText) {
+    job.result = resultText;
+  } else if (status === "failed" && !job.result) {
+    job.result = "Action failed in hook execution.";
+  }
+
+  updateActionJobStatus(noteId, idx, job);
+  res.json({ ok: true, jobId: job.id, status: job.status });
 });
 
 app.get("/api/agent-actions/:noteId/:actionIndex/status", (_req, res) => {
@@ -409,7 +496,38 @@ app.get("/api/agent-actions/:noteId/:actionIndex/status", (_req, res) => {
   if (!jobId) return res.json({ status: "not-started" });
 
   const job = agentJobs.get(jobId);
-  if (!job) return res.json({ status: "unknown", jobId });
+  if (!job) {
+    // Fallback to persisted frontmatter status when in-memory cache is missing.
+    // If it's still marked running long after start, mark it failed so UI doesn't spin forever.
+    if (action.jobStatus === "running") {
+      const startedMs = action.jobStartedAt ? new Date(action.jobStartedAt).getTime() : NaN;
+      const isStale = Number.isFinite(startedMs) && Date.now() - startedMs > 10 * 60 * 1000;
+      if (isStale) {
+        actions[idx].jobStatus = "failed";
+        if (!actions[idx].result) {
+          actions[idx].result = "Lost job tracking after restart. Please rerun this action.";
+        }
+        patchNoteFrontmatter(noteId, { suggestedActions: actions });
+        broadcast("notes-updated");
+        return res.json({
+          jobId,
+          status: "failed",
+          result: actions[idx].result,
+          recovered: true,
+        });
+      }
+    }
+
+    if (action.jobStatus) {
+      return res.json({
+        jobId,
+        status: action.jobStatus,
+        result: action.result,
+      });
+    }
+
+    return res.json({ status: "unknown", jobId });
+  }
 
   res.json({
     jobId,
@@ -428,8 +546,13 @@ function updateActionJobStatus(noteId: string, actionIdx: number, job: AgentJob)
   if (actionIdx < 0 || actionIdx >= actions.length) return;
 
   actions[actionIdx].jobStatus = job.status as any;
+  if (job.status === "completed") {
+    actions[actionIdx].status = "completed";
+  }
   if (job.result) actions[actionIdx].result = job.result;
   patchNoteFrontmatter(noteId, { suggestedActions: actions });
+  agentJobs.set(job.id, job);
+  saveAgentJobs();
   broadcast("notes-updated");
 }
 
@@ -463,6 +586,7 @@ app.get("/api/mission", (_req, res) => {
 ensureNoteFolders();
 migrateFolderIcons();
 fs.mkdirSync(PENDING_DIR, { recursive: true });
+loadAgentJobs();
 
 const watcher = watch(
   [
