@@ -200,14 +200,16 @@ export function App() {
           </div>
           <ThemeToggle />
         </nav>
-        <div className="grid grid-cols-[minmax(0,1fr)_280px] max-[1060px]:grid-cols-1 gap-10 max-[1060px]:gap-[22px] flex-1 w-full max-w-[1320px] mx-auto px-6 max-[700px]:px-[14px] py-8 max-[700px]:py-5">
-          <main className={`w-full mx-auto ${state.view === "note" ? "max-w-[760px]" : "max-w-[820px]"}`}>
+        <div className="grid grid-cols-[300px_minmax(0,1fr)] max-[1060px]:grid-cols-1 gap-8 max-[1060px]:gap-[22px] flex-1 w-full max-w-[1320px] mx-auto px-6 max-[700px]:px-[14px] py-8 max-[700px]:py-5">
+          <div className="max-[1060px]:order-2">
+            <Sidebar />
+          </div>
+          <main className={`w-full mx-auto max-[1060px]:order-1 ${state.view === "note" ? "max-w-[760px]" : "max-w-[860px]"}`}>
             {state.view === "capture" && <Capture />}
             {state.view === "list" && <NoteList />}
             {state.view === "note" && state.activeNote && <NoteView />}
             {state.view === "tasks" && <TaskList />}
           </main>
-          <Sidebar />
         </div>
       </div>
     </AppContext>
