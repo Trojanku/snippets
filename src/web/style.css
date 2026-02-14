@@ -132,13 +132,13 @@ body {
   align-self: start;
   max-height: calc(100vh - 92px);
   overflow: auto;
-  padding: 18px;
+  padding: 22px;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.42);
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
 }
 
 .sidebar h3 {
@@ -146,7 +146,8 @@ body {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-soft);
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  margin-top: 4px;
 }
 
 .sidebar button {
@@ -162,41 +163,63 @@ body {
 .tree-wrap {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  border: 1px solid rgba(221, 214, 202, 0.5);
 }
 
 .tree-node {
   display: flex;
   flex-direction: column;
+  gap: 6px;
 }
 
 .tree-children {
   display: flex;
   flex-direction: column;
+  gap: 4px;
+  padding-left: 4px;
 }
 
 .tree-folder-row {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background-color 120ms ease;
+}
+
+.tree-folder-row:hover {
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .tree-toggle {
-  width: 18px;
+  width: 16px;
+  min-width: 16px;
   color: var(--ink-soft);
+  font-size: 14px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
 }
 
 .tree-folder,
 .tree-note {
-  font-size: 12px;
+  font-size: 13px;
   border-radius: 6px;
-  padding: 3px 6px;
+  padding: 6px 8px;
   color: var(--ink-soft);
+  flex: 1;
+  text-align: left;
 }
 
 .tree-folder:hover,
 .tree-note:hover {
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.7);
   color: var(--ink);
 }
 
@@ -204,14 +227,19 @@ body {
 .tree-folder.all-notes.active {
   background: #f1ecdf;
   color: var(--ink);
+  font-weight: 500;
 }
 
 .tree-count {
   margin-left: auto;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-soft);
+  font-weight: 500;
+  background: rgba(0, 0, 0, 0.03);
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 .connection-list {

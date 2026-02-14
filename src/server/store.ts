@@ -136,7 +136,7 @@ function parseNote(filePath: string): Note | null {
     const fm = data as NoteFrontmatter;
 
     const cleanedFmFolder = sanitizeFolderPath(fm.folderPath);
-    const folderPath = cleanedFmFolder ?? diskFolderPath;
+    const folderPath = cleanedFmFolder && cleanedFmFolder !== "" ? cleanedFmFolder : diskFolderPath;
 
     return {
       frontmatter: {

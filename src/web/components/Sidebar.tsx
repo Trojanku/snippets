@@ -32,7 +32,14 @@ export function Sidebar() {
     const counts = new Map<string, number>();
     for (const note of notes) {
       const folder = note.folderPath || "";
+      // Count in exact folder
       counts.set(folder, (counts.get(folder) || 0) + 1);
+      // Also count in all parent folders
+      const parts = folder.split("/").filter(Boolean);
+      for (let i = 0; i < parts.length; i++) {
+        const parent = parts.slice(0, i).join("/");
+        counts.set(parent, (counts.get(parent) || 0) + 1);
+      }
     }
     return counts;
   }, [notes]);
@@ -85,15 +92,20 @@ export function Sidebar() {
     );
   }
 
+  const rootCount = state.notes.length;
+
   return (
     <aside className="sidebar">
-      <h3>Folders</h3>
-      <button
-        className={`tree-folder all-notes ${selectedFolder === "" ? "active" : ""}`}
-        onClick={() => setSelectedFolder("")}
-      >
-        All notes
-      </button>
+      <h3>📁 Folders</h3>
+      <div className="tree-folder-row">
+        <button
+          className={`tree-folder ${selectedFolder === "" ? "active" : ""}`}
+          onClick={() => setSelectedFolder("")}
+        >
+          All notes
+        </button>
+        <span className="tree-count">{rootCount}</span>
+      </div>
 
       <div className="tree-wrap">
         {tree ? renderTreeNode(tree, 0) : <p className="muted">Loading tree...</p>}
