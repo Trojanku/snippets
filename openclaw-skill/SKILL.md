@@ -1,121 +1,81 @@
 ---
-name: notes-ai
-description: Process, analyze, and connect notes in the notes-ai system
+name: snippets-ai
+description: Process, analyze, and connect notes in the Snippets note-taking app. Use when asked to process notes, check pending notes, or work with the Snippets system. Triggers on "process notes", "check snippets", "snippets queue".
 user-invocable: true
 metadata: {"openclaw":{"requires":{"bins":["curl"]}}}
 ---
 
-# notes-ai Skill
+# snippets-ai Skill
 
-You are the intelligence layer for the notes-ai system. You analyze notes, find connections between them, and maintain a knowledge graph.
+You are the intelligence layer for Snippets.
 
-## How the System Works
+## Core rule: classify before acting
 
-- Notes are markdown files in `notes/` with YAML frontmatter
-- The web UI saves raw notes with minimal frontmatter (`id`, `created`, `status: raw`)
-- Your job: read new/updated notes, analyze them, and write back enriched metadata
-- The UI watches for file changes via SSE and reactively displays your updates
+Every note must be classified:
+- `kind`: `knowledge | action | idea | journal | reference`
+- `actionability`: `none | maybe | clear`
+- `classificationConfidence`: `0.0..1.0`
 
-## Note Frontmatter Schema
+Default to **conservative** behavior:
+- If unclear, use `kind: knowledge`, `actionability: none`
+- Do **not** create tasks unless intent is explicit
 
-When processing a note, update its frontmatter to include:
+## Task extraction guardrails
+
+Create actionable suggestions only when explicit intent exists, e.g.:
+- "TODO"
+- "I need to..."
+- deadline/commitment language ("by Friday", "must", "ship")
+
+Informational/product notes (like product positioning, architecture descriptions) are usually `knowledge`, not tasks.
+
+## Processing queue workflow
+
+Use queue endpoints (server runs on `http://localhost:3811`):
+
+```bash
+curl -s http://localhost:3811/api/pending
+curl -s -X POST http://localhost:3811/api/pending/<id>/start
+curl -s http://localhost:3811/api/notes/<id>
+curl -s -X DELETE http://localhost:3811/api/pending/<id>
+```
+
+For each pending note ID:
+1. `POST /api/pending/<id>/start` (sets `status: processing`)
+2. Read note
+3. Enrich frontmatter
+4. Update graph connections
+5. `DELETE /api/pending/<id>` (sets `status: processed` + removes queue entry)
+
+## Frontmatter schema
+
+When processing, include:
 
 ```yaml
----
-id: "20260214-153022-xxxx"       # Already set — do not change
-created: "2026-02-14T15:30:22Z"  # Already set — do not change
-updated: "2026-02-14T15:35:00Z"  # Set to current time when you process
-title: "Short descriptive title"  # Infer from content
-themes: ["theme1", "theme2"]      # 1-4 themes from content
-summary: "One sentence summary"   # Concise summary of the note
-connections: ["other-note-id"]    # IDs of related notes
-suggestedActions:                  # 0-3 suggested follow-ups
-  - type: create-task
-    label: "Description of task"
-  - type: expand
-    label: "Suggestion to elaborate"
-status: processed                  # Change from "raw" to "processed"
----
+id: "..."
+created: "..."
+updated: "..."
+status: processed
+kind: knowledge
+actionability: none
+classificationConfidence: 0.92
+title: "..."
+themes: ["...", "..."]
+summary: "..."
+connections: ["..."]
+suggestedActions: []
 ```
 
-## Processing a Note
+Keep the note body unchanged.
 
-When triggered to process a note:
+## Connections graph
 
-1. **Read the note** from `notes/<filename>`
-2. **Analyze the content**: identify themes, generate a title and summary
-3. **Find connections**: read all other notes' frontmatter and identify relationships
-4. **Update the note's frontmatter** with title, themes, summary, connections, suggestedActions, status
-5. **Update `.agent/connections.json`** with any new edges
-6. **Update MISSION.md** if the note implies actionable tasks
-7. **Update MEMORY.md** if the note reveals new patterns or insights worth remembering
+Update `.agent/connections.json` with useful links:
+- avoid duplicates
+- include relationship + strength + short reason
+- prefer high-signal edges only
 
-## Reading Notes
+## Mission / memory behavior
 
-Via the API (if the server is running):
-```bash
-curl -s http://localhost:3811/api/notes          # List all notes (frontmatter only)
-curl -s http://localhost:3811/api/notes/<id>      # Get full note
-curl -s http://localhost:3811/api/connections      # Get connection graph
-```
-
-Or read files directly:
-```bash
-cat notes/<id>.md                    # Read a specific note
-ls notes/                            # List all note files
-cat .agent/connections.json          # Read connection graph
-```
-
-## Writing Metadata Back
-
-Edit the note file directly. Use `gray-matter` format — YAML frontmatter between `---` delimiters, followed by the original content (never modify the user's content body).
-
-## connections.json Schema
-
-```json
-{
-  "version": 1,
-  "edges": [
-    {
-      "source": "note-id-1",
-      "target": "note-id-2",
-      "relationship": "related",
-      "strength": 0.8,
-      "reason": "Brief explanation of why these are connected"
-    }
-  ]
-}
-```
-
-- `strength`: 0.0 to 1.0, how strongly related
-- `relationship`: "related", "extends", "contradicts", "implements", "references"
-- Avoid duplicate edges (check both directions)
-
-## MISSION.md
-
-When a note suggests tasks or action items, append them to `MISSION.md` in this format:
-
-```markdown
-## Tasks
-
-- [ ] Task description (from note: <note-id>)
-```
-
-## MEMORY.md
-
-Periodically update with distilled insights:
-
-```markdown
-# Memory
-
-## Patterns
-- Insight 1
-- Insight 2
-
-## Key Themes
-- Theme: brief description
-```
-
-## Query Interface
-
-Users may ask you to search or query their notes. Use the API or read files directly to answer. You have full access to the notes directory.
+- Update `MISSION.md` only for clearly actionable items
+- Update `MEMORY.md` only for durable patterns/insights

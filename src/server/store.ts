@@ -17,7 +17,11 @@ export interface NoteFrontmatter {
   summary?: string;
   connections?: string[];
   suggestedActions?: { type: string; label: string }[];
-  status?: string;
+  status?: "raw" | "queued" | "processing" | "processed" | "failed" | string;
+  kind?: "knowledge" | "action" | "idea" | "journal" | "reference" | string;
+  actionability?: "none" | "maybe" | "clear" | string;
+  classificationConfidence?: number;
+  processingError?: string;
 }
 
 export interface Note {
@@ -112,4 +116,28 @@ export function getMission(): string {
   } catch {
     return "";
   }
+}
+
+export function patchNoteFrontmatter(id: string, patch: Partial<NoteFrontmatter>): Note | null {
+  const filePath = path.join(NOTES_DIR, `${id}.md`);
+  if (!fs.existsSync(filePath)) return null;
+
+  const note = parseNote(filePath);
+  if (!note) return null;
+
+  const nextFrontmatter: NoteFrontmatter = {
+    ...note.frontmatter,
+    ...patch,
+    updated: new Date().toISOString(),
+  };
+
+  const fileContent = matter.stringify(note.content, nextFrontmatter);
+  fs.writeFileSync(filePath, fileContent);
+  return { frontmatter: nextFrontmatter, content: note.content };
+}
+
+export function setNoteStatus(id: string, status: NoteFrontmatter["status"], processingError?: string): Note | null {
+  const patch: Partial<NoteFrontmatter> = { status };
+  if (processingError !== undefined) patch.processingError = processingError;
+  return patchNoteFrontmatter(id, patch);
 }

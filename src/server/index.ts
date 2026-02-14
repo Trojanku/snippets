@@ -11,6 +11,7 @@ import {
   getConnections,
   getMemory,
   getMission,
+  setNoteStatus,
 } from "./store.js";
 
 const PENDING_DIR = path.resolve(".agent/pending");
@@ -105,8 +106,9 @@ app.post("/api/notes", async (req, res) => {
   // Queue for AI processing
   fs.mkdirSync(PENDING_DIR, { recursive: true });
   fs.writeFileSync(path.join(PENDING_DIR, note.frontmatter.id), "");
+  setNoteStatus(note.frontmatter.id, "queued");
   console.log(`[queue] Note ${note.frontmatter.id} queued for processing`);
-  
+
   // Trigger OpenClaw agent immediately
   triggerAgent(note.frontmatter.id);
   
@@ -124,13 +126,22 @@ app.get("/api/pending", (_req, res) => {
   res.json(pending);
 });
 
+app.post("/api/pending/:id/start", (req, res) => {
+  const id = req.params.id;
+  setNoteStatus(id, "processing");
+  console.log(`[queue] Note ${id} marked as processing`);
+  res.status(204).send();
+});
+
 app.delete("/api/pending/:id", (req, res) => {
   // Mark note as processed (remove from queue)
-  const filePath = path.join(PENDING_DIR, req.params.id);
+  const id = req.params.id;
+  const filePath = path.join(PENDING_DIR, id);
   if (fs.existsSync(filePath)) {
     fs.unlinkSync(filePath);
-    console.log(`[queue] Note ${req.params.id} marked as processed`);
   }
+  setNoteStatus(id, "processed");
+  console.log(`[queue] Note ${id} marked as processed`);
   res.status(204).send();
 });
 
