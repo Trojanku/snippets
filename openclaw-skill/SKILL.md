@@ -99,22 +99,30 @@ suggestedActions:
 
 ### Suggested Actions Best Practices
 
-**For user actions** (assignee: "user"):
-- Clear, concrete next steps
-- Specific enough to act on immediately
-- Examples: "Schedule meeting", "Review PR #123", "Update docs"
-- Use priority: high/medium/low based on urgency
+**For agent actions** (assignee: "agent") — PREFER THESE:
+- You (the AI) can implement or research these yourself
+- **Examples:**
+  - "Implement dark mode toggle in UI"
+  - "Find tea shops in Brisbane with ratings"
+  - "Write a summary of this concept"
+  - "Generate a blog post outline"
+  - "Research best practices for X"
+  - "Refactor this code section"
+  - "Create documentation page"
+- If it's computational, informational, or code-related → **agent**
 
-**For agent actions** (assignee: "agent"):
-- Self-contained AI work (summarization, expansion, lookup)
-- Actionable by the Snippets skill or OpenClaw
-- Examples: "Expand this into a blog post", "Find related research", "Generate outline"
-- These become executable tasks the system can run
+**For user actions** (assignee: "user") — ONLY when necessary:
+- Physical tasks user must do: "Buy groceries", "Visit location"
+- Personal decisions only they can make: "Schedule meeting", "Choose theme"
+- Requires user permissions/accounts: "Post to your Twitter", "Access your email"
+- Needs human judgment in their context: "Review and approve this design"
+- **Avoid:** Don't default to "user" just because it sounds like a task
 
 **Conservative default:**
 - Only create actions when intent is *explicit*
 - Ambiguous notes → empty `suggestedActions`
-- Better to miss an action than over-generate
+- Default to **agent** if the task is doable programmatically/informationally
+- Better to over-assign to agent than under-utilize them
 
 Keep the note body unchanged.
 
