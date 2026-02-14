@@ -319,6 +319,41 @@ export function addToPendingQueue(id: string): void {
   fs.writeFileSync(path.join(PENDING_DIR, id), "");
 }
 
+export function deleteNote(id: string): boolean {
+  const file = findNoteFileById(id);
+  if (!file) return false;
+
+  try {
+    fs.unlinkSync(file);
+    
+    // Clean up pending queue entry if exists
+    const pendingFile = path.join(PENDING_DIR, id);
+    if (fs.existsSync(pendingFile)) {
+      fs.unlinkSync(pendingFile);
+    }
+
+    // Remove from connections graph
+    try {
+      const connPath = CONNECTIONS_PATH;
+      if (fs.existsSync(connPath)) {
+        const raw = fs.readFileSync(connPath, "utf-8");
+        const graph = JSON.parse(raw) as ConnectionGraph;
+        graph.edges = graph.edges.filter(
+          (e) => e.source !== id && e.target !== id
+        );
+        fs.writeFileSync(connPath, JSON.stringify(graph, null, 2));
+      }
+    } catch {
+      // Ignore connection cleanup errors
+    }
+
+    return true;
+  } catch (err) {
+    console.error(`[delete] Failed to delete note ${id}:`, err);
+    return false;
+  }
+}
+
 export function saveNoteContent(id: string, newContent: string): Note | null {
   const file = findNoteFileById(id);
   if (!file) {

@@ -18,6 +18,7 @@ import {
   moveNoteToFolder,
   ensureNoteFolders,
   patchNoteFrontmatter,
+  deleteNote,
 } from "./store.js";
 
 const PENDING_DIR = path.resolve(".agent/pending");
@@ -113,6 +114,21 @@ app.post("/api/notes/:id/seen", (req, res) => {
   const note = getNote(id);
   if (!note) return res.status(404).json({ error: "Note not found" });
   markNoteSeen(id);
+  res.json({ ok: true });
+});
+
+app.delete("/api/notes/:id", (req, res) => {
+  const id = req.params.id;
+  const note = getNote(id);
+  if (!note) return res.status(404).json({ error: "Note not found" });
+
+  const deleted = deleteNote(id);
+  if (!deleted) {
+    return res.status(500).json({ error: "Failed to delete note" });
+  }
+
+  console.log(`[delete] Deleted note ${id}`);
+  broadcast("notes-updated");
   res.json({ ok: true });
 });
 

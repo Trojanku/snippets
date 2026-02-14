@@ -2,6 +2,7 @@ import Markdown from "react-markdown";
 import { useState } from "react";
 import { useApp } from "../App.tsx";
 import { api } from "../lib/api.ts";
+import type { FullNote } from "../lib/api.ts";
 
 interface ActionEditState {
   actionIndex: number;
@@ -9,7 +10,7 @@ interface ActionEditState {
 }
 
 export function NoteView() {
-  const { state, openNote, refresh } = useApp();
+  const { state, openNote, refresh, dispatch } = useApp();
   const note = state.activeNote;
   const [retrying, setRetrying] = useState(false);
   const [retryError, setRetryError] = useState<string | null>(null);
@@ -18,6 +19,8 @@ export function NoteView() {
   const [isSaving, setIsSaving] = useState(false);
   const [actionEditing, setActionEditing] = useState<ActionEditState | null>(null);
   const [runningJobId, setRunningJobId] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   if (!note) return null;
 
@@ -94,18 +97,65 @@ export function NoteView() {
     }
   }
 
+  async function handleDeleteNote() {
+    setIsDeleting(true);
+    try {
+      await api.deleteNote(fm.id);
+      await refresh();
+      // Navigate back to list
+      dispatch({ type: "SET_ACTIVE_NOTE", note: null });
+      dispatch({ type: "SET_VIEW", view: "list" });
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirm(false);
+    }
+  }
+
   return (
     <div className="note-view">
+      {deleteConfirm && (
+        <div className="delete-confirm-box">
+          <p>Are you sure you want to delete this note? This cannot be undone.</p>
+          <div className="delete-confirm-actions">
+            <button
+              className="delete-confirm-btn"
+              onClick={handleDeleteNote}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Yes, delete"}
+            </button>
+            <button
+              className="delete-cancel-btn"
+              onClick={() => setDeleteConfirm(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="note-view-header">
         <div>
           <h1>{fm.title || fm.id}</h1>
           {fm.folderPath && <div className="note-path note-path-detail">{fm.folderPath}</div>}
         </div>
-        {!isEditing && (
-          <button className="edit-btn" onClick={handleStartEdit} title="Edit note">
-            ✎
-          </button>
-        )}
+        <div className="note-actions">
+          {!isEditing && (
+            <button className="edit-btn" onClick={handleStartEdit} title="Edit note">
+              ✎
+            </button>
+          )}
+          {!isEditing && !deleteConfirm && (
+            <button
+              className="delete-btn"
+              onClick={() => setDeleteConfirm(true)}
+              title="Delete note"
+            >
+              🗑
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="note-meta">

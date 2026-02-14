@@ -134,6 +134,8 @@ export const api = {
     json(`/agent-actions/${encodeURIComponent(noteId)}/${actionIndex}/run`, "POST"),
   checkAgentActionStatus: (noteId: string, actionIndex: number) =>
     json(`/agent-actions/${encodeURIComponent(noteId)}/${actionIndex}/status`, "GET"),
+  deleteNote: (id: string) =>
+    json(`/notes/${encodeURIComponent(id)}`, "DELETE"),
 };
 
 export type SSEHandler = (event: string, data: string) => void;

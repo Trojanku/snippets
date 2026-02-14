@@ -596,6 +596,66 @@ body {
   border-radius: 16px;
 }
 
+.delete-confirm-box {
+  padding: 14px;
+  margin-bottom: 16px;
+  background: #f8ece8;
+  border: 1px solid #ecd1cb;
+  border-radius: 10px;
+  border-left: 3px solid #ad5f50;
+}
+
+.delete-confirm-box p {
+  font-size: 13px;
+  color: #7a3931;
+  margin: 0 0 10px 0;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.delete-confirm-btn,
+.delete-cancel-btn {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 7px 12px;
+  border-radius: 6px;
+  border: 1px solid #ecd1cb;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.delete-confirm-btn {
+  background: #ad5f50;
+  color: #fff;
+}
+
+.delete-confirm-btn:hover {
+  background: #9a4f42;
+}
+
+.delete-confirm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.delete-cancel-btn {
+  background: transparent;
+  color: #7a3931;
+}
+
+.delete-cancel-btn:hover {
+  background: rgba(173, 95, 80, 0.1);
+}
+
+.delete-cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .note-view-header {
   display: flex;
   justify-content: space-between;
@@ -608,7 +668,14 @@ body {
   margin-bottom: 0;
 }
 
-.edit-btn {
+.note-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.edit-btn,
+.delete-btn {
   background: none;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -617,13 +684,18 @@ body {
   cursor: pointer;
   font-size: 18px;
   transition: all 120ms ease;
-  flex-shrink: 0;
 }
 
 .edit-btn:hover {
   background: rgba(255, 255, 255, 0.6);
   border-color: var(--focus);
   color: var(--ink);
+}
+
+.delete-btn:hover {
+  background: #f8ece8;
+  border-color: #ad5f50;
+  color: #ad5f50;
 }
 
 .note-edit-box {
