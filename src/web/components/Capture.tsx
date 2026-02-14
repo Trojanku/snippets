@@ -21,26 +21,24 @@ export function Capture() {
   }
 
   return (
-    <form className="flex flex-col gap-3.5" onSubmit={handleSubmit}>
-      <div className="border border-line rounded-2xl px-5.5 py-5.5 bg-gradient-to-b from-white/99 to-white/98 shadow-lg">
-        <div className="text-xs tracking-widest uppercase text-ink-soft mb-2.5">Capture</div>
-        <textarea
-          className="w-full p-0 text-[20px] leading-[1.75] font-serif text-ink bg-transparent placeholder-gray-400 focus:outline-none resize-vertical"
-          style={{ minHeight: "320px" }}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="What needs to be remembered?"
-          autoFocus
-          rows={12}
-        />
+    <form className="surface flex flex-col gap-4" onSubmit={handleSubmit}>
+      <div>
+        <p className="text-xs uppercase tracking-widest text-ink-soft">Capture</p>
+        <h2 className="font-serif text-6xl font-semibold text-ink">Write it once</h2>
       </div>
-      <div className="flex justify-between items-center gap-3 flex-wrap">
-        <span className="text-xs tracking-widest uppercase text-ink-soft">Write freely. Processing runs automatically.</span>
-        <button
-          className="px-4.5 py-2.5 bg-green-800 text-white rounded-full text-xs tracking-widest uppercase cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed hover:bg-green-900 transition-colors duration-120"
-          type="submit"
-          disabled={saving || !content.trim()}
-        >
+      <textarea
+        className="control min-h-[320px] w-full resize-y border-line/80 bg-paper/45 p-4 font-serif text-[20px] leading-[1.75] text-ink"
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        placeholder="What needs to be remembered?"
+        autoFocus
+        rows={12}
+      />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span className="text-xs uppercase tracking-widest text-ink-soft">
+          Write freely. Processing runs automatically.
+        </span>
+        <button className="btn-accent" type="submit" disabled={saving || !content.trim()}>
           {saving ? "Saving..." : "Save Note"}
         </button>
       </div>

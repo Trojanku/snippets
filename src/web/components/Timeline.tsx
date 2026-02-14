@@ -15,29 +15,29 @@ export function Timeline() {
   const sortedThemes = [...grouped.keys()].sort();
 
   if (state.notes.length === 0) {
-    return <div className="text-ink-soft text-center py-11 px-4.5 text-4xl">No notes yet.</div>;
+    return <div className="px-4.5 py-11 text-center text-4xl text-ink-soft">No notes yet.</div>;
   }
 
   return (
-    <div className="flex flex-col gap-6.5">
+    <section className="surface flex flex-col gap-6.5">
       {sortedThemes.map((theme) => (
         <section key={theme} className="flex flex-col gap-1.5">
-          <h2 className="font-serif text-6xl font-semibold mb-2 pb-2 border-b border-line-strong">{theme}</h2>
+          <h2 className="border-b border-line-strong pb-2 font-serif text-6xl font-semibold">{theme}</h2>
           {grouped.get(theme)!.map((n) => (
             <button
               key={n.id}
-              className="flex flex-col gap-2 py-4.5 px-1.5 bg-transparent border-0 border-b border-b-line/50 cursor-pointer text-left w-full font-inherit text-inherit text-ink rounded-none transition-colors duration-120 hover:bg-white/46 note-card"
+              className="note-row border-0 bg-transparent"
               onClick={() => openNote(n.id)}
             >
-              <div className="font-serif font-semibold text-5.5 leading-tight note-card-title">{n.title || n.id}</div>
-              <div className="text-xs tracking-widest uppercase text-ink-soft note-card-date">
+              <div className="font-serif text-5.5 font-semibold leading-tight">{n.title || n.id}</div>
+              <div className="text-xs uppercase tracking-widest text-ink-soft">
                 {new Date(n.created).toLocaleDateString()}
               </div>
-              {n.summary && <div className="text-4xl leading-tight text-gray-700 note-card-summary">{n.summary}</div>}
+              {n.summary && <div className="text-sm leading-1.75 text-ink-soft">{n.summary}</div>}
             </button>
           ))}
         </section>
       ))}
-    </div>
+    </section>
   );
 }

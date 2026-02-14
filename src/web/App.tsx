@@ -18,6 +18,7 @@ import { NoteView } from "./components/NoteView.tsx";
 import { Sidebar } from "./components/Sidebar.tsx";
 import { TaskList } from "./components/TaskList.tsx";
 import { ThemeToggle } from "./components/ThemeToggle.tsx";
+import { ConnectionsPanel } from "./components/ConnectionsPanel.tsx";
 
 type View = "capture" | "list" | "note" | "tasks";
 
@@ -123,6 +124,7 @@ export function App() {
 
   const setSelectedFolder = useCallback((folderPath: string) => {
     dispatch({ type: "SET_SELECTED_FOLDER", folderPath });
+    dispatch({ type: "SET_VIEW", view: "list" });
   }, []);
 
   const readyToReadCount = state.notes.filter((n) => {
@@ -158,58 +160,57 @@ export function App() {
 
   return (
     <AppContext value={ctx}>
-      <div className="flex flex-col min-h-screen">
-        <nav className="sticky top-0 z-20 flex items-center gap-5 px-7 py-3.5 bg-paper/94 border-b border-line backdrop-blur transition-colors duration-200">
-          <span className="font-serif text-xl tracking-wider text-ink">notes-ai</span>
-          <div className="flex gap-1.5 flex-1 nav-links">
-            <button
-              className={`bg-transparent border border-transparent text-ink-soft text-xs tracking-widest uppercase px-3 py-1.5 rounded-full cursor-pointer transition-colors duration-120 ${
-                state.view === "capture"
-                  ? "bg-accent-soft border-line text-ink"
-                  : "hover:border-line hover:text-ink"
-              }`}
-              onClick={() => dispatch({ type: "SET_VIEW", view: "capture" })}
-            >
-              Capture
-            </button>
-            <button
-              className={`bg-transparent border border-transparent text-ink-soft text-xs tracking-widest uppercase px-3 py-1.5 rounded-full cursor-pointer transition-colors duration-120 ${
-                state.view === "list"
-                  ? "bg-accent-soft border-line text-ink"
-                  : "hover:border-line hover:text-ink"
-              }`}
-              onClick={() => dispatch({ type: "SET_VIEW", view: "list" })}
-            >
-              Notes
-              {readyToReadCount > 0 && (
-                <span className="ml-2 text-xs rounded-full px-1.75 py-0.5 border border-green-600 bg-green-100 text-green-900">
-                  {readyToReadCount}
-                </span>
-              )}
-            </button>
-            <button
-              className={`bg-transparent border border-transparent text-ink-soft text-xs tracking-widest uppercase px-3 py-1.5 rounded-full cursor-pointer transition-colors duration-120 ${
-                state.view === "tasks"
-                  ? "bg-accent-soft border-line text-ink"
-                  : "hover:border-line hover:text-ink"
-              }`}
-              onClick={() => dispatch({ type: "SET_VIEW", view: "tasks" })}
-            >
-              Tasks
-            </button>
+      <div className="min-h-screen">
+        <nav className="sticky top-0 z-20 border-b border-line/80 bg-paper/86 backdrop-blur-xl transition-colors duration-200">
+          <div className="mx-auto flex w-full max-w-[1380px] items-center gap-4 px-6 py-4 max-[700px]:px-4 max-[700px]:py-3">
+            <div className="min-w-40">
+              <p className="font-serif text-xl leading-tight text-ink">notes-ai</p>
+              <p className="text-[11px] uppercase tracking-[0.2em] text-ink-soft">quiet workspace</p>
+            </div>
+            <div className="flex flex-1 flex-wrap items-center gap-1.5">
+              <button
+                className={state.view === "capture" ? "btn-accent" : "btn-muted"}
+                onClick={() => dispatch({ type: "SET_VIEW", view: "capture" })}
+              >
+                Capture
+              </button>
+              <button
+                className={state.view === "list" ? "btn-accent" : "btn-muted"}
+                onClick={() => dispatch({ type: "SET_VIEW", view: "list" })}
+              >
+                Notes
+                {readyToReadCount > 0 && (
+                  <span className="ml-2 rounded-full border border-success/40 bg-accent-soft px-1.75 py-0.5 text-[10px] text-success">
+                    {readyToReadCount}
+                  </span>
+                )}
+              </button>
+              <button
+                className={state.view === "tasks" ? "btn-accent" : "btn-muted"}
+                onClick={() => dispatch({ type: "SET_VIEW", view: "tasks" })}
+              >
+                Tasks
+              </button>
+            </div>
+            <ThemeToggle />
           </div>
-          <ThemeToggle />
         </nav>
-        <div className="grid grid-cols-[300px_minmax(0,1fr)] max-[1060px]:grid-cols-1 gap-8 max-[1060px]:gap-[22px] flex-1 w-full max-w-[1320px] mx-auto px-6 max-[700px]:px-[14px] py-8 max-[700px]:py-5">
+
+        <div className="mx-auto grid w-full max-w-[1520px] grid-cols-[300px_minmax(0,1fr)_300px] gap-7 px-6 py-7 max-[1240px]:grid-cols-[280px_minmax(0,1fr)] max-[1060px]:grid-cols-1 max-[1060px]:gap-5 max-[700px]:px-4 max-[700px]:py-4">
           <div className="max-[1060px]:order-2">
             <Sidebar />
           </div>
-          <main className={`w-full mx-auto max-[1060px]:order-1 ${state.view === "note" ? "max-w-[760px]" : "max-w-[860px]"}`}>
+
+          <main className={`w-full max-[1060px]:order-1 ${state.view === "note" ? "max-w-[860px]" : "max-w-[990px]"}`}>
             {state.view === "capture" && <Capture />}
             {state.view === "list" && <NoteList />}
             {state.view === "note" && state.activeNote && <NoteView />}
             {state.view === "tasks" && <TaskList />}
           </main>
+
+          <div className="max-[1240px]:col-start-2 max-[1240px]:row-start-2 max-[1060px]:order-3">
+            <ConnectionsPanel />
+          </div>
         </div>
       </div>
     </AppContext>

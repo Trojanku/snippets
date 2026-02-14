@@ -15,24 +15,23 @@ export function ThemeToggle() {
   }, []);
 
   useEffect(() => {
-    // Apply theme to html element
     const html = document.documentElement;
-    let activeTheme = theme;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
 
-    if (theme === "system") {
-      activeTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    }
-
-    // Remove all theme classes
-    html.classList.remove("light", "dark", "system");
-    
-    // Add active theme class
-    if (theme !== "system") {
+    const apply = () => {
+      const activeTheme = theme === "system" ? (media.matches ? "dark" : "light") : theme;
+      html.classList.remove("light", "dark");
       html.classList.add(activeTheme);
-    }
+    };
 
-    // Save preference
+    apply();
+    const onMediaChange = () => {
+      if (theme === "system") apply();
+    };
+    media.addEventListener("change", onMediaChange);
     localStorage.setItem("theme-preference", theme);
+
+    return () => media.removeEventListener("change", onMediaChange);
   }, [theme]);
 
   const handleToggle = () => {
@@ -56,7 +55,7 @@ export function ThemeToggle() {
 
   return (
     <button
-      className="bg-transparent border border-line text-ink-soft text-lg px-2.5 py-1.75 rounded cursor-pointer transition-all duration-120 hover:bg-white/10 hover:border-focus hover:text-ink flex-shrink-0"
+      className="flex-shrink-0 rounded-full border border-line bg-paper/55 px-3 py-1.5 text-base text-ink-soft transition-colors hover:border-focus hover:bg-paper hover:text-ink"
       onClick={handleToggle}
       title={`Theme: ${theme} (click to cycle)`}
       aria-label="Toggle theme"

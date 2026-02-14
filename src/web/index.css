@@ -3,157 +3,257 @@
 @tailwind utilities;
 
 :root {
-  --color-paper: 253 251 247;
-  --color-paper-deep: 247 243 235;
-  --color-ink: 39 36 31;
-  --color-ink-soft: 107 102 95;
-  --color-line: 221 214 202;
-  --color-line-strong: 207 197 183;
-  --color-focus: 111 133 114;
-  --color-accent: 124 143 127;
-  --color-accent-soft: 239 244 238;
-  --color-danger: 173 95 80;
-  --color-danger-soft: 250 240 238;
-  --color-caution: 212 165 116;
-  --color-success: 54 91 57;
+  --color-paper: 245 242 236;
+  --color-paper-deep: 236 231 222;
+  --color-ink: 33 31 28;
+  --color-ink-soft: 103 97 90;
+  --color-line: 206 198 184;
+  --color-line-strong: 176 166 150;
+  --color-focus: 98 131 113;
+  --color-accent: 109 142 124;
+  --color-accent-soft: 225 235 227;
+  --color-danger: 174 89 75;
+  --color-danger-soft: 247 231 226;
+  --color-caution: 195 150 95;
+  --color-success: 58 111 76;
 }
 
 html.light {
-  --color-paper: 253 251 247;
-  --color-paper-deep: 247 243 235;
-  --color-ink: 39 36 31;
-  --color-ink-soft: 107 102 95;
-  --color-line: 221 214 202;
-  --color-line-strong: 207 197 183;
-  --color-focus: 111 133 114;
-  --color-accent: 124 143 127;
-  --color-accent-soft: 239 244 238;
-  --color-danger: 173 95 80;
-  --color-danger-soft: 250 240 238;
+  color-scheme: light;
 }
 
 html.dark {
-  --color-paper: 26 24 21;
-  --color-paper-deep: 15 13 10;
-  --color-ink: 245 243 240;
-  --color-ink-soft: 184 180 173;
-  --color-line: 58 53 48;
-  --color-line-strong: 80 74 66;
-  --color-focus: 141 184 159;
-  --color-accent: 124 159 143;
-  --color-accent-soft: 31 46 40;
-  --color-danger: 217 119 96;
-  --color-danger-soft: 42 26 22;
-  --color-caution: 212 165 116;
-  --color-success: 109 179 118;
+  --color-paper: 19 22 24;
+  --color-paper-deep: 14 16 18;
+  --color-ink: 236 234 228;
+  --color-ink-soft: 171 166 157;
+  --color-line: 62 65 69;
+  --color-line-strong: 91 95 100;
+  --color-focus: 145 189 162;
+  --color-accent: 129 168 144;
+  --color-accent-soft: 36 46 41;
+  --color-danger: 211 120 102;
+  --color-danger-soft: 56 33 29;
+  --color-caution: 220 173 114;
+  --color-success: 122 188 145;
   color-scheme: dark;
 }
 
 @media (prefers-color-scheme: dark) {
   html:not(.light) {
-    --color-paper: 26 24 21;
-    --color-paper-deep: 15 13 10;
-    --color-ink: 245 243 240;
-    --color-ink-soft: 184 180 173;
-    --color-line: 58 53 48;
-    --color-line-strong: 80 74 66;
-    --color-focus: 141 184 159;
-    --color-accent: 124 159 143;
-    --color-accent-soft: 31 46 40;
-    --color-danger: 217 119 96;
-    --color-danger-soft: 42 26 22;
-    --color-caution: 212 165 116;
-    --color-success: 109 179 118;
+    --color-paper: 19 22 24;
+    --color-paper-deep: 14 16 18;
+    --color-ink: 236 234 228;
+    --color-ink-soft: 171 166 157;
+    --color-line: 62 65 69;
+    --color-line-strong: 91 95 100;
+    --color-focus: 145 189 162;
+    --color-accent: 129 168 144;
+    --color-accent-soft: 36 46 41;
+    --color-danger: 211 120 102;
+    --color-danger-soft: 56 33 29;
+    --color-caution: 220 173 114;
+    --color-success: 122 188 145;
   }
 }
 
 @layer base {
   * {
-    @apply m-0 box-border;
+    @apply box-border m-0;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
   }
 
   body {
-    @apply font-sans text-ink leading-1.6 transition-colors duration-200;
+    @apply font-sans text-ink leading-1.6 antialiased transition-colors duration-200;
     background-color: rgb(var(--color-paper));
     background-image:
-      radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.1) 0, transparent 34%),
-      radial-gradient(circle at 100% 100%, rgba(244, 239, 229, 0.1) 0, transparent 40%);
-  }
-
-  html.dark body {
-    background-image:
-      radial-gradient(circle at 0% 0%, rgba(100, 80, 60, 0.15) 0, transparent 34%),
-      radial-gradient(circle at 100% 100%, rgba(50, 40, 30, 0.2) 0, transparent 40%);
+      radial-gradient(circle at 12% 0%, rgba(var(--color-accent), 0.15) 0, transparent 36%),
+      radial-gradient(circle at 100% 88%, rgba(var(--color-line-strong), 0.15) 0, transparent 44%);
   }
 }
 
 @layer components {
+  .panel {
+    @apply border border-line/80 rounded-2xl bg-paper/80 backdrop-blur;
+    box-shadow: 0 14px 36px rgba(12, 14, 16, 0.08);
+  }
+
+  .panel-subtle {
+    @apply border border-line/70 rounded-xl bg-paper-deep/35;
+  }
+
+  .surface {
+    @apply panel p-5;
+  }
+
+  .control {
+    @apply border border-line bg-paper/70 rounded-lg px-3 py-2 text-sm text-ink transition-colors;
+  }
+
+  .control:hover {
+    @apply border-line-strong bg-paper;
+  }
+
+  .control::placeholder {
+    color: rgb(var(--color-ink-soft) / 0.7);
+  }
+
+  .btn {
+    @apply rounded-full border px-3 py-1.5 text-xs tracking-widest uppercase transition-colors;
+  }
+
+  .btn-muted {
+    @apply btn border-line/70 bg-paper/45 text-ink-soft hover:border-line hover:bg-paper hover:text-ink;
+  }
+
+  .btn-accent {
+    @apply btn border-line-strong bg-accent-soft text-ink hover:border-focus;
+  }
+
+  .chip {
+    @apply text-xs rounded-full px-2 py-0.5 tracking-widest uppercase border border-line bg-paper-deep/60 text-ink-soft;
+    font-size: 10px;
+  }
+
   .status {
     @apply text-xs tracking-widest uppercase px-2 py-0.5 rounded-full border;
     font-size: 10px;
   }
-  .status-raw { @apply bg-[#f8f4eb] text-[#76694d] border-[#e4dccf]; }
-  .status-processed { @apply bg-[#edf4ec] text-[#2f4f32] border-[#ccdccc]; }
-  .status-queued { @apply bg-[#f3f1f8] text-[#58536d] border-[#ddd7eb]; }
+
+  .status-raw {
+    @apply bg-paper-deep/70 text-ink-soft border-line;
+  }
+
+  .status-processed {
+    @apply bg-accent-soft/80 text-success border-success/30;
+  }
+
+  .status-queued {
+    @apply bg-paper/90 text-ink-soft border-line;
+  }
+
   .status-processing {
-    @apply text-[#5b5b6f] border-[#e2dded];
-    background: linear-gradient(90deg, #f1eff7, #f7f5fb, #f1eff7);
+    @apply text-ink-soft border-line;
+    background: linear-gradient(
+      90deg,
+      rgba(var(--color-paper), 0.9),
+      rgba(var(--color-accent-soft), 0.7),
+      rgba(var(--color-paper), 0.9)
+    );
     background-size: 200% 100%;
     animation: mist-shift 3s ease-in-out infinite;
   }
-  .status-failed { @apply bg-[#f8ece8] text-[#7a3931] border-[#ecd1cb]; }
 
-  .badge { @apply text-xs rounded-full px-2 py-0.5 tracking-widest uppercase border border-[#dfd6c6] text-[#585047] bg-[#f9f6ee]; font-size: 10px; }
-  .action-clear { @apply text-success border-[#c8dcc8] bg-[#eef5ee]; }
-  .action-maybe { @apply text-[#7d5c35] border-[#e5d8c2] bg-[#faf5ea]; }
+  .status-failed {
+    @apply bg-danger-soft text-danger border-danger/40;
+  }
+
+  .badge {
+    @apply chip;
+  }
+
+  .action-clear {
+    @apply text-success border-success/35 bg-accent-soft/70;
+  }
+
+  .action-maybe {
+    @apply text-caution border-caution/35 bg-caution/10;
+  }
+
+  .note-row {
+    @apply flex flex-col gap-2 py-4 px-3 text-left w-full text-ink border-b border-line/60 transition-colors rounded-lg;
+  }
+
+  .note-row:hover {
+    @apply bg-paper/65;
+  }
 
   .note-content p,
   .note-content ul,
   .note-content ol,
-  .note-content blockquote { margin: 0 0 1.1em; }
+  .note-content blockquote {
+    margin: 0 0 1.05em;
+  }
+
   .note-content h1,
   .note-content h2,
   .note-content h3,
-  .note-content h4 { @apply font-serif leading-tight; margin: 1.2em 0 0.6em; }
-  .note-content code { @apply bg-[#f4efe5] px-1 py-0.5 rounded; font-size: 0.86em; }
+  .note-content h4 {
+    @apply font-serif leading-tight;
+    margin: 1.2em 0 0.6em;
+  }
 
-  html.dark button,
-  html.dark input,
-  html.dark textarea,
-  html.dark select { @apply border-line; }
+  .note-content code {
+    @apply bg-paper-deep/80 px-1 py-0.5 rounded;
+    font-size: 0.86em;
+  }
 
-  html.dark .action-chip,
-  html.dark .badge { @apply bg-paper-deep text-ink-soft border-line; }
-  html.dark .note-card { @apply text-ink border-line; }
-  html.dark .note-card:hover { background-color: rgba(255, 255, 255, 0.05); }
-  html.dark .capture-sheet { @apply border-line; background: linear-gradient(180deg, rgba(26, 24, 21, 0.5) 0%, rgba(15, 13, 10, 0.8) 100%); }
-  html.dark .sidebar { @apply border-line; background-color: rgba(26, 24, 21, 0.5); }
-  html.dark textarea,
-  html.dark input[type="text"] { @apply text-ink; background-color: #252220; }
-  html.dark .retry-box { @apply bg-danger-soft border-danger; }
-  html.dark .note-view { @apply border-line; background: linear-gradient(180deg, rgba(26, 24, 21, 0.8), rgba(15, 13, 10, 0.9)); }
-  html.dark .delete-confirm-box { @apply bg-danger-soft border-danger; color: #f5d7d3; }
-  html.dark .action-item { @apply border-line; background-color: rgba(124, 159, 143, 0.1); }
-  html.dark .action-item.action-user { @apply border-l-accent; }
-  html.dark .filter-input,
-  html.dark .filter-select { @apply text-ink border-line; background-color: rgba(58, 53, 48, 0.5); }
+  .note-content a {
+    @apply text-focus;
+  }
+
+  .tree-node {
+    @apply space-y-1;
+  }
+
+  .tree-branch {
+    @apply ml-4 border-l border-line/40 pl-3;
+  }
+
+  .tree-toggle {
+    @apply h-7 w-7 min-w-7 rounded-md border border-line/55 bg-paper/30 text-xs leading-none text-ink-soft transition-colors hover:border-line-strong hover:bg-paper hover:text-ink;
+  }
+
+  .tree-folder {
+    @apply flex-1 rounded-lg border px-2.5 py-1.5 text-left text-sm transition-colors;
+  }
+
+  .tree-folder-idle {
+    @apply tree-folder border-transparent text-ink-soft hover:border-line/70 hover:bg-paper/65 hover:text-ink;
+  }
+
+  .tree-folder-active {
+    @apply tree-folder border-line-strong bg-accent-soft/80 text-ink;
+  }
+
+  .tree-pill {
+    @apply min-w-[2rem] rounded-full border px-1.5 py-1 text-center text-[11px] leading-none;
+  }
+
+  .tree-pill-idle {
+    @apply tree-pill border-line bg-paper/70 text-ink-soft;
+  }
+
+  .tree-pill-active {
+    @apply tree-pill border-line-strong bg-accent-soft text-ink;
+  }
 }
 
 @layer utilities {
-  .nav-links button:focus-visible,
-  .capture-btn:focus-visible,
-  .note-card:focus-visible,
-  .filter-input:focus-visible,
-  .filter-select:focus-visible,
-  .retry-btn:focus-visible,
-  .sidebar button:focus-visible {
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
     @apply outline-2 outline-offset-2;
     outline-color: rgb(var(--color-focus));
   }
 }
 
 @keyframes mist-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }

@@ -53,6 +53,7 @@ export interface NotesTreeFolderNode {
   type: "folder";
   name: string;
   path: string;
+  icon?: string;
   children: NotesTreeNode[];
 }
 

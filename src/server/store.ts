@@ -6,6 +6,7 @@ const NOTES_DIR = path.resolve("notes");
 const AGENT_DIR = path.resolve(".agent");
 const PENDING_DIR = path.join(AGENT_DIR, "pending");
 const CONNECTIONS_PATH = path.join(AGENT_DIR, "connections.json");
+const FOLDER_ICONS_PATH = path.join(AGENT_DIR, "folder-icons.json");
 const MEMORY_PATH = path.resolve("MEMORY.md");
 const MISSION_PATH = path.resolve("MISSION.md");
 
@@ -71,6 +72,7 @@ export interface NotesTreeFolderNode {
   type: "folder";
   name: string;
   path: string;
+  icon?: string;
   children: NotesTreeNode[];
 }
 
@@ -85,6 +87,24 @@ export interface NotesTreeNoteNode {
 }
 
 export type NotesTreeNode = NotesTreeFolderNode | NotesTreeNoteNode;
+
+const FOLDER_ICON_CHOICES = [
+  "📁",
+  "🗂️",
+  "📂",
+  "🧾",
+  "🧠",
+  "🗒️",
+  "📌",
+  "🧭",
+  "📎",
+  "🛠️",
+] as const;
+
+interface FolderIconStore {
+  version: 1;
+  icons: Record<string, string>;
+}
 
 function toPosixPath(p: string): string {
   return p.split(path.sep).join("/");
@@ -108,11 +128,68 @@ function sanitizeFolderPath(folderPath?: string): string | null {
   return normalized;
 }
 
+function readFolderIconStore(): FolderIconStore {
+  try {
+    const raw = fs.readFileSync(FOLDER_ICONS_PATH, "utf-8");
+    const parsed = JSON.parse(raw) as Partial<FolderIconStore>;
+    return {
+      version: 1,
+      icons: parsed.icons || {},
+    };
+  } catch {
+    return { version: 1, icons: {} };
+  }
+}
+
+function writeFolderIconStore(store: FolderIconStore): void {
+  fs.mkdirSync(AGENT_DIR, { recursive: true });
+  fs.writeFileSync(FOLDER_ICONS_PATH, JSON.stringify(store, null, 2));
+}
+
+function hashFolderPath(folderPath: string): number {
+  let hash = 0;
+  for (let i = 0; i < folderPath.length; i++) {
+    hash = (hash * 31 + folderPath.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+function pickIconForFolder(folderPath: string): string {
+  const idx = hashFolderPath(folderPath) % FOLDER_ICON_CHOICES.length;
+  return FOLDER_ICON_CHOICES[idx];
+}
+
+function ensureFolderIcon(folderPath: string): string {
+  if (!folderPath) return "📁";
+  const store = readFolderIconStore();
+  const existing = store.icons[folderPath];
+  if (existing) return existing;
+  const icon = pickIconForFolder(folderPath);
+  store.icons[folderPath] = icon;
+  writeFolderIconStore(store);
+  return icon;
+}
+
 export function ensureNoteFolders(): void {
   fs.mkdirSync(NOTES_DIR, { recursive: true });
   for (const folder of DEFAULT_NOTE_FOLDERS) {
     fs.mkdirSync(path.join(NOTES_DIR, folder), { recursive: true });
   }
+}
+
+export function migrateFolderIcons(): void {
+  ensureNoteFolders();
+  const folders = listFoldersRecursive(NOTES_DIR);
+  if (folders.length === 0) return;
+
+  const store = readFolderIconStore();
+  let changed = false;
+  for (const folder of folders) {
+    if (store.icons[folder]) continue;
+    store.icons[folder] = pickIconForFolder(folder);
+    changed = true;
+  }
+  if (changed) writeFolderIconStore(store);
 }
 
 function generateId(): string {
@@ -133,6 +210,17 @@ function listMarkdownFilesRecursive(dir: string, out: string[] = []): string[] {
     } else if (entry.isFile() && entry.name.endsWith(".md")) {
       out.push(full);
     }
+  }
+  return out;
+}
+
+function listFoldersRecursive(dir: string, relDir = "", out: string[] = []): string[] {
+  if (!fs.existsSync(dir)) return out;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const childRel = relDir ? path.join(relDir, entry.name) : entry.name;
+    out.push(toPosixPath(childRel));
+    listFoldersRecursive(path.join(dir, entry.name), childRel, out);
   }
   return out;
 }
@@ -296,7 +384,9 @@ export function patchNoteFrontmatter(id: string, patch: Partial<NoteFrontmatter>
 export function moveNoteToFolder(id: string, folderPath: string): Note | null {
   const safe = sanitizeFolderPath(folderPath);
   if (safe === null) return null;
-  return patchNoteFrontmatter(id, { folderPath: safe });
+  const moved = patchNoteFrontmatter(id, { folderPath: safe });
+  if (safe) ensureFolderIcon(safe);
+  return moved;
 }
 
 export function setNoteStatus(
@@ -395,6 +485,7 @@ function buildTree(absDir: string, relDir: string): NotesTreeFolderNode {
     type: "folder",
     name: folderName,
     path: toPosixPath(relDir),
+    icon: relDir === "" ? "📚" : ensureFolderIcon(toPosixPath(relDir)),
     children: [],
   };
 

@@ -2,7 +2,6 @@ import Markdown from "react-markdown";
 import { useState } from "react";
 import { useApp } from "../App.tsx";
 import { api } from "../lib/api.ts";
-import type { FullNote } from "../lib/api.ts";
 
 interface ActionEditState {
   actionIndex: number;
@@ -18,7 +17,6 @@ export function NoteView() {
   const [editedContent, setEditedContent] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
   const [actionEditing, setActionEditing] = useState<ActionEditState | null>(null);
-  const [runningJobId, setRunningJobId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -34,11 +32,11 @@ export function NoteView() {
       setRetryError(res.error || "Retry failed");
     }
     await refresh();
-    openNote(fm.id);
+    await openNote(fm.id);
     setRetrying(false);
   }
 
-  async function handleStartEdit() {
+  function handleStartEdit() {
     setEditedContent(content);
     setIsEditing(true);
   }
@@ -83,15 +81,12 @@ export function NoteView() {
   async function handleRunAction(actionIndex: number) {
     const result = await api.runAgentAction(fm.id, actionIndex);
     if (result?.jobId) {
-      setRunningJobId(result.jobId);
-      // Start polling for status
       const pollInterval = setInterval(async () => {
         const status = await api.checkAgentActionStatus(fm.id, actionIndex);
         if (status?.status === "completed" || status?.status === "failed") {
           clearInterval(pollInterval);
           await refresh();
           await openNote(fm.id);
-          setRunningJobId(null);
         }
       }, 1000);
     }
@@ -102,7 +97,6 @@ export function NoteView() {
     try {
       await api.deleteNote(fm.id);
       await refresh();
-      // Navigate back to list
       dispatch({ type: "SET_ACTIVE_NOTE", note: null });
       dispatch({ type: "SET_VIEW", view: "list" });
     } finally {
@@ -112,20 +106,22 @@ export function NoteView() {
   }
 
   return (
-    <div className="flex flex-col gap-5 p-7 border border-line bg-gradient-to-b from-white/72 to-white/72 rounded-2xl note-view">
+    <article className="surface flex flex-col gap-5">
       {deleteConfirm && (
-        <div className="p-3.5 mb-4 bg-danger-soft border border-danger rounded px-3.5 py-3.5 border-l-4 border-l-danger delete-confirm-box">
-          <p className="text-sm text-danger mb-2.5">Are you sure you want to delete this note? This cannot be undone.</p>
+        <div className="rounded-lg border border-danger/60 bg-danger-soft px-3.5 py-3.5">
+          <p className="mb-2.5 text-sm text-danger">
+            Are you sure you want to delete this note? This cannot be undone.
+          </p>
           <div className="flex gap-2">
             <button
-              className="text-xs tracking-widest uppercase px-3 py-1.75 rounded border border-danger bg-danger text-white cursor-pointer transition-all duration-120 disabled:opacity-60 disabled:cursor-not-allowed hover:bg-opacity-90"
+              className="btn border-danger bg-danger text-paper hover:opacity-90"
               onClick={handleDeleteNote}
               disabled={isDeleting}
             >
               {isDeleting ? "Deleting..." : "Yes, delete"}
             </button>
             <button
-              className="text-xs tracking-widest uppercase px-3 py-1.75 rounded border border-danger bg-transparent text-danger cursor-pointer transition-all duration-120 disabled:opacity-60 disabled:cursor-not-allowed hover:bg-danger/10"
+              className="btn-muted"
               onClick={() => setDeleteConfirm(false)}
               disabled={isDeleting}
             >
@@ -135,118 +131,137 @@ export function NoteView() {
         </div>
       )}
 
-      <div className="flex justify-between items-start gap-4 mb-3">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="font-serif text-6xl font-semibold leading-tight">{fm.title || fm.id}</h1>
-          {fm.folderPath && <div className="text-xs tracking-widest uppercase text-ink-soft mb-1">{fm.folderPath}</div>}
+          {fm.folderPath && (
+            <div className="mb-1 text-xs uppercase tracking-widest text-ink-soft">{fm.folderPath}</div>
+          )}
         </div>
-        <div className="flex gap-2 flex-shrink-0">
+        <div className="flex shrink-0 gap-2">
           {!isEditing && (
-            <button className="bg-none border border-line rounded px-2 py-2 text-ink-soft cursor-pointer text-lg transition-all duration-120 hover:bg-white/60 hover:border-focus hover:text-ink" onClick={handleStartEdit} title="Edit note">
-              ✎
+            <button className="btn-muted" onClick={handleStartEdit} title="Edit note">
+              Edit
             </button>
           )}
           {!isEditing && !deleteConfirm && (
             <button
-              className="bg-none border border-line rounded px-2 py-2 text-ink-soft cursor-pointer text-lg transition-all duration-120 hover:bg-danger-soft hover:border-danger hover:text-danger"
+              className="btn border-danger/40 text-danger hover:bg-danger-soft"
               onClick={() => setDeleteConfirm(true)}
               title="Delete note"
             >
-              🗑
+              Delete
             </button>
           )}
         </div>
       </div>
 
-      <div className="flex items-center gap-2.5 flex-wrap text-xs text-ink-soft tracking-widest uppercase">
+      <div className="flex flex-wrap items-center gap-2.5 text-xs uppercase tracking-widest text-ink-soft">
         <span>{new Date(fm.created).toLocaleString()}</span>
-        {fm.status && (
-          <span className={`px-2 py-0.5 rounded-full border status status-${fm.status}`}>{fm.status}</span>
-        )}
-        <span className="px-2 py-0.5 rounded-full border border-gray-300 bg-gray-100 text-gray-700 badge badge-kind">{fm.kind || "unknown"}</span>
-        <span className={`px-2 py-0.5 rounded-full border badge badge-actionability action-${fm.actionability || "none"}`}>
-          {fm.actionability === "clear" ? "✓ Clear" : fm.actionability === "maybe" ? "? Maybe" : "— None"}
+        {fm.status && <span className={`status status-${fm.status}`}>{fm.status}</span>}
+        <span className="badge">{fm.kind || "unknown"}</span>
+        <span className={`badge action-${fm.actionability || "none"}`}>
+          {fm.actionability === "clear" ? "Clear" : fm.actionability === "maybe" ? "Maybe" : "None"}
         </span>
         {typeof fm.classificationConfidence === "number" && (
-          <span className="text-ink-soft">confidence {(fm.classificationConfidence * 100).toFixed(0)}%</span>
+          <span>confidence {(fm.classificationConfidence * 100).toFixed(0)}%</span>
         )}
       </div>
 
       {fm.themes && fm.themes.length > 0 && (
         <div className="flex flex-wrap gap-1.75">
           {fm.themes.map((t) => (
-            <span key={t} className="text-xs px-2 py-0.5 border border-gray-300 bg-gray-100 text-gray-700 rounded-full tracking-widest uppercase tag">{t}</span>
+            <span key={t} className="chip">
+              {t}
+            </span>
           ))}
         </div>
       )}
 
-      {fm.summary && <blockquote className="border-l-2 border-line pl-4 py-2 text-ink-soft italic bg-white/56 note-summary">{fm.summary}</blockquote>}
+      {fm.summary && (
+        <blockquote className="rounded-lg border-l-2 border-line bg-paper-deep/35 px-4 py-2 italic text-ink-soft">
+          {fm.summary}
+        </blockquote>
+      )}
 
       {(fm.status === "failed" || fm.processingError) && (
-        <div className="border border-danger bg-danger-soft rounded px-3.25 py-2.75 flex gap-2.25 items-center flex-wrap retry-box">
-          <p className="text-danger text-sm">Processing failed: {fm.processingError || "unknown error"}</p>
-          <button className="border border-danger/70 bg-gray-200 text-danger rounded-full px-2.75 py-1.5 cursor-pointer transition-all duration-120 uppercase text-xs tracking-widest disabled:opacity-60 disabled:cursor-not-allowed hover:bg-danger/20 retry-btn" onClick={handleRetry} disabled={retrying}>
+        <div className="flex flex-wrap items-center gap-2.25 rounded-lg border border-danger/60 bg-danger-soft px-3.25 py-2.75">
+          <p className="text-sm text-danger">Processing failed: {fm.processingError || "unknown error"}</p>
+          <button
+            className="btn border-danger/70 text-danger hover:bg-danger/20"
+            onClick={handleRetry}
+            disabled={retrying}
+          >
             {retrying ? "Retrying..." : "Retry processing"}
           </button>
-          {retryError && <p className="text-danger text-sm">{retryError}</p>}
+          {retryError && <p className="text-sm text-danger">{retryError}</p>}
         </div>
       )}
 
       {isEditing ? (
-        <div className="my-3 px-4.5 py-4.5 bg-gradient-to-b from-white/99 to-white/98 border border-line rounded-3 note-edit-box">
+        <div className="rounded-xl border border-line/80 bg-paper/45 px-4.5 py-4.5">
           <textarea
-            className="w-full min-h-70 px-3 py-3 font-sans text-base leading-1.6 border border-line rounded bg-white text-ink resize-vertical focus:outline-2 focus:outline-[rgb(var(--color-focus))] note-edit-area"
+            className="control min-h-70 w-full resize-y rounded-lg bg-paper px-3 py-3 font-sans text-base leading-1.6"
             value={editedContent}
             onChange={(e) => setEditedContent(e.target.value)}
             placeholder="Edit note content..."
           />
-          <div className="flex gap-2.5 mt-3">
-            <button className="px-4 py-2.25 rounded border border-line text-xs tracking-widest uppercase cursor-pointer transition-all duration-120 bg-green-800 text-white disabled:opacity-55 disabled:cursor-not-allowed hover:bg-green-900 save-btn" onClick={handleSaveEdit} disabled={isSaving}>
+          <div className="mt-3 flex gap-2.5">
+            <button className="btn-accent" onClick={handleSaveEdit} disabled={isSaving}>
               {isSaving ? "Saving..." : "Save & Reprocess"}
             </button>
-            <button className="px-4 py-2.25 rounded border border-line bg-transparent text-ink-soft text-xs tracking-widest uppercase cursor-pointer transition-all duration-120 disabled:opacity-55 disabled:cursor-not-allowed hover:bg-white/60 hover:text-ink cancel-btn" onClick={handleCancelEdit} disabled={isSaving}>
+            <button className="btn-muted" onClick={handleCancelEdit} disabled={isSaving}>
               Cancel
             </button>
           </div>
-          <p className="text-xs text-ink-soft mt-2.5 italic">Saving will trigger re-categorization to detect changes in themes, kind, and actionability.</p>
+          <p className="mt-2.5 text-xs italic text-ink-soft">
+            Saving will trigger re-categorization to detect changes in themes, kind, and actionability.
+          </p>
         </div>
       ) : (
-        <div className="font-serif text-base leading-tight text-gray-800 note-content">
+        <div className="note-content font-serif text-base leading-1.9 text-ink">
           <Markdown>{content}</Markdown>
         </div>
       )}
 
       {fm.suggestedActions && fm.suggestedActions.length > 0 && !isEditing && (
-        <div className="mt-7 pt-5 border-t border-line suggested-actions">
-          <h3 className="text-sm font-semibold mb-3.5 text-ink">💡 Suggested Actions</h3>
+        <section className="mt-2 border-t border-line pt-5">
+          <h3 className="mb-3.5 font-serif text-5 font-semibold text-ink">Suggested Actions</h3>
           <div className="flex flex-col gap-3">
             {fm.suggestedActions.map((a, i) => {
               const isAgent = a.assignee === "agent";
               const isCompleted = a.status === "completed";
               const isPriority = a.priority === "high";
-              
+
               return (
                 <div
                   key={i}
-                  className={`px-3.5 py-3.5 border rounded-2.5 flex flex-col gap-2 transition-all duration-120 action-item action-${a.assignee || "user"} priority-${a.priority || "medium"} ${
-                    isCompleted ? "opacity-60 bg-gray-100" : isAgent ? "border-line bg-white/24" : "bg-white/62 border-line"
+                  className={`flex flex-col gap-2 rounded-xl border px-3.5 py-3.5 ${
+                    isCompleted
+                      ? "border-line/70 bg-paper-deep/45 opacity-70"
+                      : "border-line/80 bg-paper/45"
                   }`}
                 >
-                  <div className="flex justify-between items-center gap-2">
-                    <span className="text-xs tracking-widest uppercase text-ink-soft font-semibold action-assignee">
-                      {isAgent ? "🤖 Agent" : "👤 You"}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs uppercase tracking-widest text-ink-soft">
+                      {isAgent ? "Agent" : "You"}
                     </span>
-                    {isPriority && <span className="text-xs tracking-widest uppercase px-1.5 py-0.5 rounded bg-yellow-600 text-white action-priority">High</span>}
+                    {isPriority && (
+                      <span className="rounded-full border border-caution/50 bg-caution/15 px-2 py-0.5 text-xs uppercase tracking-widest text-caution">
+                        High
+                      </span>
+                    )}
                   </div>
-                  <p className="text-sm leading-1.5 text-ink action-label">{a.label}</p>
+                  <p className="text-sm leading-1.5 text-ink">{a.label}</p>
                   {a.jobStatus === "running" && (
-                    <p className="text-xs text-accent italic animate-pulse action-running">⏳ Running... started {new Date(a.jobStartedAt || "").toLocaleTimeString()}</p>
+                    <p className="animate-pulse text-xs italic text-accent">Running...</p>
                   )}
-                  {a.result && <p className="text-sm text-success italic action-result">✓ {a.result}</p>}
+                  {a.result && <p className="text-sm italic text-success">{a.result}</p>}
+
                   {actionEditing?.actionIndex === i ? (
                     <div className="flex flex-col gap-2">
                       <textarea
-                        className="text-xs px-2 py-2 border border-line rounded bg-white text-ink min-h-12.5 resize-vertical font-sans focus:outline-2 focus:outline-[rgb(var(--color-focus))] action-result-input"
+                        className="control min-h-12.5 resize-y bg-paper px-2 py-2 text-xs"
                         value={actionEditing.result}
                         onChange={(e) =>
                           setActionEditing({ ...actionEditing, result: e.target.value })
@@ -255,51 +270,40 @@ export function NoteView() {
                       />
                       <div className="flex gap-2">
                         <button
-                          className="text-xs tracking-widest uppercase px-2.5 py-1.5 rounded bg-green-800 text-white cursor-pointer transition-all duration-120 hover:bg-green-900 action-save-result-btn"
-                          onClick={() =>
-                            handleCompleteAction(i, actionEditing.result || undefined)
-                          }
+                          className="btn-accent"
+                          onClick={() => handleCompleteAction(i, actionEditing.result || undefined)}
                         >
-                          Done ✓
+                          Done
                         </button>
-                        <button
-                          className="text-xs tracking-widest uppercase px-2.5 py-1.5 rounded border border-line bg-transparent text-ink-soft cursor-pointer transition-all duration-120 hover:bg-danger/10 hover:text-danger action-cancel-result-btn"
-                          onClick={() => setActionEditing(null)}
-                        >
+                        <button className="btn-muted" onClick={() => setActionEditing(null)}>
                           Cancel
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {isAgent && !isCompleted && !a.jobStatus && (
-                        <button
-                          className="text-xs tracking-widest uppercase px-2.5 py-1.5 rounded border border-line bg-transparent text-ink-soft cursor-pointer transition-all duration-120 hover:bg-green-800 hover:text-white action-run-btn"
-                          title="Run this action"
-                          onClick={() => handleRunAction(i)}
-                        >
-                          Run →
+                        <button className="btn-muted" title="Run this action" onClick={() => handleRunAction(i)}>
+                          Run
                         </button>
                       )}
                       {a.jobStatus === "running" && (
-                        <button className="text-xs tracking-widest uppercase px-2.5 py-1.5 rounded border border-line bg-white/24 text-accent cursor-wait action-run-btn running" disabled>
+                        <button className="btn-muted" disabled>
                           Running...
                         </button>
                       )}
                       {!isCompleted && (
                         <button
-                          className="text-xs tracking-widest uppercase px-2.5 py-1.5 rounded border border-line bg-transparent text-ink-soft cursor-pointer transition-all duration-120 hover:bg-success/10 hover:text-success action-done-btn"
+                          className="btn-muted"
                           title="Mark as done"
-                          onClick={() =>
-                            setActionEditing({ actionIndex: i, result: a.result || "" })
-                          }
+                          onClick={() => setActionEditing({ actionIndex: i, result: a.result || "" })}
                         >
-                          Done ✓
+                          Done
                         </button>
                       )}
                       {!isCompleted && (
                         <button
-                          className="text-xs tracking-widest uppercase px-2.5 py-1.5 rounded border border-line bg-transparent text-ink-soft cursor-pointer transition-all duration-120 hover:bg-red/5 hover:text-danger action-decline-btn"
+                          className="btn border-danger/40 text-danger hover:bg-danger-soft"
                           title="Skip this action"
                           onClick={() => handleDeclineAction(i)}
                         >
@@ -312,8 +316,8 @@ export function NoteView() {
               );
             })}
           </div>
-        </div>
+        </section>
       )}
-    </div>
+    </article>
   );
 }

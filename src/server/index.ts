@@ -17,6 +17,7 @@ import {
   getNotesTree,
   moveNoteToFolder,
   ensureNoteFolders,
+  migrateFolderIcons,
   patchNoteFrontmatter,
   deleteNote,
 } from "./store.js";
@@ -460,6 +461,7 @@ app.get("/api/mission", (_req, res) => {
 
 // Ensure directories exist
 ensureNoteFolders();
+migrateFolderIcons();
 fs.mkdirSync(PENDING_DIR, { recursive: true });
 
 const watcher = watch(

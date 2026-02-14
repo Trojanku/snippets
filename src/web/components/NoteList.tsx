@@ -41,19 +41,19 @@ export function NoteList() {
   }, [scopedNotes, kind, theme, query]);
 
   if (state.notes.length === 0) {
-    return <div className="text-ink-soft text-center py-11 px-4.5 text-4xl">No notes yet. Capture something!</div>;
+    return <div className="py-11 px-4.5 text-center text-4xl text-ink-soft">No notes yet. Capture something!</div>;
   }
 
   return (
-    <>
-      <div className="flex gap-2.5 mb-4 pb-2.5 border-b border-line flex-wrap">
+    <section className="panel flex flex-col p-4">
+      <div className="mb-4 flex flex-wrap gap-2.5 border-b border-line/80 pb-3">
         <input
-          className="border border-line bg-white/72 rounded-2.5 px-3 py-2.25 text-sm text-ink min-w-65 flex-1 filter-input"
+          className="control min-w-65 flex-1"
           placeholder="Search notes..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <select className="border border-line bg-white/72 rounded-2.5 px-3 py-2.25 text-sm text-ink filter-select" value={kind} onChange={(e) => setKind(e.target.value)}>
+        <select className="control" value={kind} onChange={(e) => setKind(e.target.value)}>
           <option value="all">All kinds</option>
           <option value="knowledge">Knowledge</option>
           <option value="action">Action</option>
@@ -62,7 +62,7 @@ export function NoteList() {
           <option value="reference">Reference</option>
           <option value="unknown">Unknown</option>
         </select>
-        <select className="border border-line bg-white/72 rounded-2.5 px-3 py-2.25 text-sm text-ink filter-select" value={theme} onChange={(e) => setTheme(e.target.value)}>
+        <select className="control" value={theme} onChange={(e) => setTheme(e.target.value)}>
           <option value="all">All themes</option>
           {allThemes.map((t) => (
             <option key={t} value={t}>
@@ -74,31 +74,31 @@ export function NoteList() {
 
       <div className="flex flex-col">
         {filtered.map((n) => (
-          <button key={n.id} className="flex flex-col gap-2 py-4.5 px-1.5 bg-transparent border-0 border-b border-b-line/50 cursor-pointer text-left w-full font-inherit text-inherit text-ink rounded-none transition-colors duration-120 hover:bg-white/46 note-card" onClick={() => void openNote(n.id)}>
-            <div className="font-serif font-semibold text-5.5 leading-tight note-card-title">{n.title || n.id}</div>
-            <div className="text-xs tracking-widest uppercase text-ink-soft note-card-date">{new Date(n.created).toLocaleDateString()}</div>
-            {isReadyToRead(n) && <span className="self-start text-xs tracking-widest uppercase border border-green-600 bg-green-100 text-green-900 rounded-full px-2 py-0.5 ready-pill">Ready to read</span>}
-            {n.folderPath && <div className="text-xs tracking-widest uppercase text-ink-soft note-path">{n.folderPath}</div>}
-            {n.summary && <div className="text-4xl leading-tight text-gray-700 note-card-summary">{n.summary}</div>}
+          <button key={n.id} className="note-row border-0 bg-transparent" onClick={() => void openNote(n.id)}>
+            <div className="font-serif text-5.5 font-semibold leading-tight">{n.title || n.id}</div>
+            <div className="text-xs uppercase tracking-widest text-ink-soft">{new Date(n.created).toLocaleDateString()}</div>
+            {isReadyToRead(n) && <span className="self-start rounded-full border border-success/40 bg-accent-soft px-2 py-0.5 text-[10px] uppercase tracking-widest text-success">Ready to read</span>}
+            {n.folderPath && <div className="text-xs uppercase tracking-widest text-ink-soft">{n.folderPath}</div>}
+            {n.summary && <div className="text-sm leading-1.75 text-ink-soft">{n.summary}</div>}
             {n.themes && n.themes.length > 0 && (
               <div className="flex flex-wrap gap-1.75">
                 {n.themes.map((t) => (
-                  <span key={t} className="text-xs px-2 py-0.5 border border-gray-300 bg-gray-100 text-gray-700 rounded-full tracking-widest uppercase text-xs tag">
+                  <span key={t} className="chip">
                     {t}
                   </span>
                 ))}
               </div>
             )}
-            <div className="flex gap-2 items-center flex-wrap badges-row">
-              <span className="text-xs rounded-full px-2 py-0.5 tracking-widest uppercase border border-gray-300 text-gray-700 bg-gray-100 badge badge-kind">{n.kind || "unknown"}</span>
-              <span className={`text-xs rounded-full px-2 py-0.5 tracking-widest uppercase border badge badge-actionability action-${n.actionability || "none"}`}>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="badge">{n.kind || "unknown"}</span>
+              <span className={`badge action-${n.actionability || "none"}`}>
                 {n.actionability === "clear" ? "✓ Clear" : n.actionability === "maybe" ? "? Maybe" : "— None"}
               </span>
-              <span className={`text-xs tracking-widest uppercase px-2 py-0.5 rounded-full border status status-${n.status || "raw"}`}>{n.status || "raw"}</span>
+              <span className={`status status-${n.status || "raw"}`}>{n.status || "raw"}</span>
             </div>
           </button>
         ))}
       </div>
-    </>
+    </section>
   );
 }
