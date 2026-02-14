@@ -115,7 +115,7 @@ app.post("/api/notes/:id/seen", (req, res) => {
   res.json({ ok: true });
 });
 
-app.patch("/api/notes/:id", (req, res) => {
+app.patch("/api/notes/:id", async (req, res) => {
   const id = req.params.id;
   const { content } = req.body;
   
@@ -126,6 +126,13 @@ app.patch("/api/notes/:id", (req, res) => {
   
   const updated = saveNoteContent(id, content);
   if (!updated) return res.status(500).json({ error: "Failed to save note" });
+  
+  broadcast("notes-updated");
+  
+  const result = await triggerAgent(id);
+  if (!result.ok) {
+    console.warn(`[patch] Warning: trigger failed for ${id}: ${result.error}`);
+  }
   
   res.json(updated);
 });

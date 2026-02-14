@@ -4,6 +4,7 @@ import matter from "gray-matter";
 
 const NOTES_DIR = path.resolve("notes");
 const AGENT_DIR = path.resolve(".agent");
+const PENDING_DIR = path.join(AGENT_DIR, "pending");
 const CONNECTIONS_PATH = path.join(AGENT_DIR, "connections.json");
 const MEMORY_PATH = path.resolve("MEMORY.md");
 const MISSION_PATH = path.resolve("MISSION.md");
@@ -303,12 +304,23 @@ export function markNoteSeen(id: string): Note | null {
   return patchNoteFrontmatter(id, { seenAt: new Date().toISOString() });
 }
 
+export function addToPendingQueue(id: string): void {
+  fs.mkdirSync(PENDING_DIR, { recursive: true });
+  fs.writeFileSync(path.join(PENDING_DIR, id), "");
+}
+
 export function saveNoteContent(id: string, newContent: string): Note | null {
   const file = findNoteFileById(id);
-  if (!file) return null;
+  if (!file) {
+    console.error(`[save] File not found for id: ${id}`);
+    return null;
+  }
 
   const note = parseNote(file);
-  if (!note) return null;
+  if (!note) {
+    console.error(`[save] Failed to parse note at: ${file}`);
+    return null;
+  }
 
   const newFm: NoteFrontmatter = {
     ...note.frontmatter,
@@ -320,9 +332,14 @@ export function saveNoteContent(id: string, newContent: string): Note | null {
   try {
     fs.writeFileSync(file, newRaw, "utf-8");
     addToPendingQueue(id);
-    broadcastSSE("notes-updated");
-    return parseNote(file);
-  } catch {
+    const updated = parseNote(file);
+    if (!updated) {
+      console.error(`[save] Failed to re-parse after write: ${file}`);
+      return null;
+    }
+    return updated;
+  } catch (err) {
+    console.error(`[save] Error saving note ${id}:`, err);
     return null;
   }
 }
