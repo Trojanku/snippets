@@ -70,15 +70,17 @@ For each pending note ID:
 ## Creating new notes (from actions)
 
 When an action generates a **new note** (not processing an existing one):
-- Save to: `/home/krab/projects/snippets/notes/<folderPath>/`
+- Save under the project-local notes root: `notes/<folderPath>/`
+- Resolve path relative to the Snippets project root (never machine-specific absolute paths)
 - Use filename: `YYYY-MM-DD-HHMMSS-<slug>.md`
 - Include full frontmatter (id, created, updated, kind, etc.)
 - Keep `folderPath` in sync with the actual file location
-- **Do NOT save to `/home/krab/clawd/notes/`**
+- **Do NOT save to external/workspace paths like `../clawd/notes/`**
 
 Example:
 ```bash
-echo "---
+cat > notes/ideas/2026-02-15-053031-bucket-list.md <<'EOF'
+---
 id: 20260215-053031-bucket-list
 created: 2026-02-15T05:30:31Z
 updated: 2026-02-15T05:30:31Z
@@ -87,7 +89,8 @@ kind: idea
 status: processed
 ---
 
-# Content here" > /home/krab/projects/snippets/notes/ideas/2026-02-15-053031-bucket-list.md
+# Content here
+EOF
 ```
 
 **Note on edited notes:** When a user edits a note and saves, it's automatically re-queued with `status: queued`. Re-process it normally — you may detect changes in categorization, themes, or actionability. The graph will be updated with any new connections.
