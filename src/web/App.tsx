@@ -13,16 +13,14 @@ import type {
   ConnectionGraph,
   NotesTreeFolderNode,
 } from "./lib/api.ts";
-import { Capture } from "./components/Capture.tsx";
-import { NoteList } from "./components/NoteList.tsx";
-import { NoteView } from "./components/NoteView.tsx";
+import { StreamView } from "./components/StreamView.tsx";
 import { Sidebar } from "./components/Sidebar.tsx";
 import { TaskList } from "./components/TaskList.tsx";
 import { ThemeToggle } from "./components/ThemeToggle.tsx";
 import { ConnectionsPanel } from "./components/ConnectionsPanel.tsx";
 import { AgentStatusWidget } from "./components/AgentStatusWidget.tsx";
 
-type View = "capture" | "list" | "note" | "tasks";
+type Surface = "stream" | "tasks";
 
 interface AppState {
   notes: NoteSummary[];
@@ -32,7 +30,7 @@ interface AppState {
   selectedFolder: string; // "" means all
   memory: string;
   mission: string;
-  view: View;
+  surface: Surface;
 }
 
 type Action =
@@ -43,7 +41,7 @@ type Action =
   | { type: "SET_SELECTED_FOLDER"; folderPath: string }
   | { type: "SET_MEMORY"; content: string }
   | { type: "SET_MISSION"; content: string }
-  | { type: "SET_VIEW"; view: View };
+  | { type: "SET_SURFACE"; surface: Surface };
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
@@ -61,8 +59,8 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, memory: action.content };
     case "SET_MISSION":
       return { ...state, mission: action.content };
-    case "SET_VIEW":
-      return { ...state, view: action.view };
+    case "SET_SURFACE":
+      return { ...state, surface: action.surface };
     default:
       return state;
   }
@@ -76,7 +74,7 @@ const initial: AppState = {
   selectedFolder: "",
   memory: "",
   mission: "",
-  view: "capture",
+  surface: "stream",
 };
 
 interface AppContextValue {
@@ -93,6 +91,14 @@ export const useApp = () => useContext(AppContext);
 export function App() {
   const [state, dispatch] = useReducer(reducer, initial);
   const activeNoteIdRef = useRef<string | null>(null);
+  const showConnections =
+    state.surface === "stream" &&
+    Boolean(state.activeNote) &&
+    state.connections.edges.some(
+      (e) =>
+        e.source === state.activeNote?.frontmatter.id ||
+        e.target === state.activeNote?.frontmatter.id
+    );
 
   const refresh = useCallback(async () => {
     const [notes, connections, tree, memory, mission] = await Promise.all([
@@ -113,7 +119,7 @@ export function App() {
     async (id: string) => {
       const note = await api.getNote(id);
       dispatch({ type: "SET_ACTIVE_NOTE", note });
-      dispatch({ type: "SET_VIEW", view: "note" });
+      dispatch({ type: "SET_SURFACE", surface: "stream" });
 
       const fm = note.frontmatter;
       if (fm.status === "processed" && !fm.seenAt) {
@@ -127,7 +133,6 @@ export function App() {
 
   const setSelectedFolder = useCallback((folderPath: string) => {
     dispatch({ type: "SET_SELECTED_FOLDER", folderPath });
-    dispatch({ type: "SET_VIEW", view: "list" });
   }, []);
 
   const readyToReadCount = state.notes.filter((n) => {
@@ -155,7 +160,6 @@ export function App() {
             .then((note) => dispatch({ type: "SET_ACTIVE_NOTE", note }))
             .catch(() => {
               dispatch({ type: "SET_ACTIVE_NOTE", note: null });
-              dispatch({ type: "SET_VIEW", view: "list" });
             });
         }
       } else if (event === "connections-updated") {
@@ -178,31 +182,25 @@ export function App() {
           <div className="mx-auto flex w-full max-w-[1380px] items-center gap-4 px-6 py-4 max-[700px]:px-4 max-[700px]:py-3">
             <div className="min-w-40">
               <p className="font-serif text-xl leading-tight text-ink">notes-ai</p>
-              <p className="text-[11px] uppercase tracking-[0.2em] text-ink-soft">quiet workspace</p>
+              <p className="text-[11px] uppercase tracking-[0.2em] text-ink-soft">writing stream</p>
             </div>
             <div className="flex flex-1 flex-wrap items-center gap-1.5">
               <button
-                className={state.view === "capture" ? "btn-accent" : "btn-muted"}
-                onClick={() => dispatch({ type: "SET_VIEW", view: "capture" })}
+                className={state.surface === "stream" ? "btn-accent" : "btn-muted"}
+                onClick={() => dispatch({ type: "SET_SURFACE", surface: "stream" })}
               >
-                Capture
+                Stream
               </button>
               <button
-                className={state.view === "list" ? "btn-accent" : "btn-muted"}
-                onClick={() => dispatch({ type: "SET_VIEW", view: "list" })}
+                className={state.surface === "tasks" ? "btn-accent" : "btn-muted"}
+                onClick={() => dispatch({ type: "SET_SURFACE", surface: "tasks" })}
               >
-                Notes
+                Tasks
                 {readyToReadCount > 0 && (
                   <span className="ml-2 rounded-full border border-success/40 bg-accent-soft px-1.75 py-0.5 text-[10px] text-success">
                     {readyToReadCount}
                   </span>
                 )}
-              </button>
-              <button
-                className={state.view === "tasks" ? "btn-accent" : "btn-muted"}
-                onClick={() => dispatch({ type: "SET_VIEW", view: "tasks" })}
-              >
-                Tasks
               </button>
             </div>
             <AgentStatusWidget />
@@ -210,21 +208,25 @@ export function App() {
           </div>
         </nav>
 
-        <div className="mx-auto grid w-full max-w-[1520px] grid-cols-[300px_minmax(0,1fr)_300px] gap-7 px-6 py-7 max-[1240px]:grid-cols-[280px_minmax(0,1fr)] max-[1060px]:grid-cols-1 max-[1060px]:gap-5 max-[700px]:px-4 max-[700px]:py-4">
+        <div
+          className={`mx-auto grid w-full max-w-[1760px] gap-5 px-6 py-6 max-[1320px]:grid-cols-[220px_minmax(0,1fr)] max-[1060px]:grid-cols-1 max-[1060px]:gap-4 max-[700px]:px-4 max-[700px]:py-4 ${
+            showConnections ? "grid-cols-[240px_minmax(0,1fr)_240px]" : "grid-cols-[240px_minmax(0,1fr)]"
+          }`}
+        >
           <div className="max-[1060px]:order-2">
             <Sidebar />
           </div>
 
-          <main className={`w-full max-[1060px]:order-1 ${state.view === "note" ? "max-w-[860px]" : "max-w-[990px]"}`}>
-            {state.view === "capture" && <Capture />}
-            {state.view === "list" && <NoteList />}
-            {state.view === "note" && state.activeNote && <NoteView />}
-            {state.view === "tasks" && <TaskList />}
+          <main className="w-full min-w-0 max-[1060px]:order-1">
+            {state.surface === "stream" && <StreamView />}
+            {state.surface === "tasks" && <TaskList />}
           </main>
 
-          <div className="max-[1240px]:col-start-2 max-[1240px]:row-start-2 max-[1060px]:order-3">
-            <ConnectionsPanel />
-          </div>
+          {showConnections && (
+            <div className="max-[1320px]:col-start-2 max-[1320px]:row-start-2 max-[1060px]:order-3">
+              <ConnectionsPanel />
+            </div>
+          )}
         </div>
       </div>
     </AppContext>

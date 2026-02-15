@@ -22,7 +22,7 @@ export function ConnectionsPanel() {
   }, [activeNote, connections.edges, notes]);
 
   return (
-    <aside className="panel sticky top-24 flex max-h-[calc(100vh-112px)] flex-col overflow-hidden p-4 max-[1060px]:static max-[1060px]:max-h-none">
+    <aside className="panel panel-rail sticky top-24 flex max-h-[calc(100vh-112px)] flex-col overflow-hidden p-3.5 max-[1060px]:static max-[1060px]:max-h-none">
       <div className="mb-3 border-b border-line/70 pb-3">
         <h3 className="text-xs uppercase tracking-widest text-ink-soft">Connections</h3>
         <p className="text-sm text-ink-soft">Linked context for the active note</p>

@@ -100,6 +100,18 @@ export const api = {
     if (!res.ok) return null;
     return res.json();
   },
+  updateNoteMeta: async (
+    id: string,
+    patch: { title?: string }
+  ): Promise<FullNote | null> => {
+    const res = await fetch(`${BASE}/notes/${encodeURIComponent(id)}/meta`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    });
+    if (!res.ok) return null;
+    return res.json();
+  },
   markSeen: async (id: string): Promise<{ ok: boolean; error?: string }> => {
     const res = await fetch(`${BASE}/notes/${encodeURIComponent(id)}/seen`, {
       method: "POST",
@@ -127,6 +139,18 @@ export const api = {
     const body = await res.json().catch(() => ({}));
     if (!res.ok) return { ok: false, error: body?.error || `API error: ${res.status}` };
     return { ok: true };
+  },
+  removeFolder: async (
+    folderPath: string
+  ): Promise<{ ok: boolean; movedNotes?: number; removedFolders?: number; error?: string }> => {
+    const res = await fetch(`${BASE}/folders/remove`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ folderPath }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { ok: false, error: body?.error || `API error: ${res.status}` };
+    return body;
   },
   getConnections: () => json<ConnectionGraph>("/connections"),
   retryNote: async (id: string): Promise<{ ok: boolean; error?: string }> => {

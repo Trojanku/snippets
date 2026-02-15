@@ -108,6 +108,13 @@ interface FolderIconStore {
   icons: Record<string, string>;
 }
 
+export interface RemoveFolderResult {
+  ok: boolean;
+  movedNotes: number;
+  removedFolders: number;
+  error?: string;
+}
+
 function toPosixPath(p: string): string {
   return p.split(path.sep).join("/");
 }
@@ -402,6 +409,78 @@ export function moveNoteToFolder(id: string, folderPath: string): Note | null {
   const moved = patchNoteFrontmatter(id, { folderPath: safe });
   if (safe) ensureFolderIcon(safe);
   return moved;
+}
+
+export function removeFolder(folderPath: string): RemoveFolderResult {
+  ensureNoteFolders();
+  const safe = sanitizeFolderPath(folderPath);
+  if (!safe) {
+    return { ok: false, movedNotes: 0, removedFolders: 0, error: "folderPath required" };
+  }
+
+  if (DEFAULT_NOTE_FOLDERS.includes(safe as (typeof DEFAULT_NOTE_FOLDERS)[number])) {
+    return {
+      ok: false,
+      movedNotes: 0,
+      removedFolders: 0,
+      error: "Built-in folders cannot be removed",
+    };
+  }
+
+  const absFolder = path.join(NOTES_DIR, ...safe.split("/"));
+  if (!fs.existsSync(absFolder) || !fs.statSync(absFolder).isDirectory()) {
+    return { ok: false, movedNotes: 0, removedFolders: 0, error: "Folder not found" };
+  }
+
+  const foldersBeforeDelete = listFoldersRecursive(absFolder).length + 1;
+  const notesToMove = listNotes().filter(
+    (n) => n.folderPath === safe || n.folderPath.startsWith(`${safe}/`)
+  );
+
+  let movedNotes = 0;
+  for (const note of notesToMove) {
+    const moved = moveNoteToFolder(note.frontmatter.id, "inbox");
+    if (!moved) {
+      return {
+        ok: false,
+        movedNotes,
+        removedFolders: 0,
+        error: `Failed to move note ${note.frontmatter.id} to inbox`,
+      };
+    }
+    movedNotes++;
+  }
+
+  try {
+    fs.rmSync(absFolder, { recursive: true, force: true });
+  } catch (err) {
+    return {
+      ok: false,
+      movedNotes,
+      removedFolders: 0,
+      error: `Failed to remove folder: ${String(err)}`,
+    };
+  }
+
+  try {
+    const store = readFolderIconStore();
+    let changed = false;
+    for (const key of Object.keys(store.icons)) {
+      if (key === safe || key.startsWith(`${safe}/`)) {
+        delete store.icons[key];
+        changed = true;
+      }
+    }
+    if (changed) writeFolderIconStore(store);
+  } catch {
+    // Ignore icon cleanup failures; folder deletion should still succeed.
+  }
+
+  return {
+    ok: true,
+    movedNotes,
+    removedFolders: foldersBeforeDelete,
+  };
 }
 
 export function setNoteStatus(

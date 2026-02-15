@@ -17,6 +17,7 @@ import {
   saveNoteContent,
   getNotesTree,
   moveNoteToFolder,
+  removeFolder,
   ensureNoteFolders,
   migrateFolderIcons,
   patchNoteFrontmatter,
@@ -240,6 +241,34 @@ app.patch("/api/notes/:id", async (req, res) => {
   res.json(updated);
 });
 
+app.patch("/api/notes/:id/meta", (req, res) => {
+  const id = req.params.id;
+  const note = getNote(id);
+  if (!note) return res.status(404).json({ error: "Note not found" });
+
+  const patch: { title?: string } = {};
+  if ("title" in req.body) {
+    if (req.body.title !== undefined && typeof req.body.title !== "string") {
+      return res.status(400).json({ error: "title must be string" });
+    }
+    const trimmedTitle = typeof req.body.title === "string" ? req.body.title.trim() : "";
+    if (trimmedTitle.length > 180) {
+      return res.status(413).json({ error: "title too long (max 180 chars)" });
+    }
+    patch.title = trimmedTitle || undefined;
+  }
+
+  if (Object.keys(patch).length === 0) {
+    return res.status(400).json({ error: "No metadata fields provided" });
+  }
+
+  const updated = patchNoteFrontmatter(id, patch);
+  if (!updated) return res.status(500).json({ error: "Failed to update note metadata" });
+
+  broadcast("notes-updated");
+  res.json(updated);
+});
+
 app.get("/api/tree", (_req, res) => {
   res.json(getNotesTree());
 });
@@ -329,6 +358,17 @@ app.post("/api/notes/:id/move", (req, res) => {
   }
 
   res.json({ ok: true, note: moved });
+});
+
+app.post("/api/folders/remove", (req, res) => {
+  const folderPath = typeof req.body?.folderPath === "string" ? req.body.folderPath : "";
+  const result = removeFolder(folderPath);
+  if (!result.ok) {
+    return res.status(400).json(result);
+  }
+  console.log(`[folders] Removed ${folderPath}; moved ${result.movedNotes} note(s) to inbox`);
+  broadcast("notes-updated");
+  res.json(result);
 });
 
 app.post("/api/pending/:id/start", (req, res) => {
