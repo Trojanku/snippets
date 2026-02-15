@@ -412,7 +412,9 @@ app.post("/api/agent-actions/:noteId/:actionIndex/run", async (req, res) => {
 
   // Queue action for processing via OpenClaw webhook
   const taskLabel = action.label || action.type;
-  const callbackUrl = `http://localhost:${PORT}/api/agent-actions/${encodeURIComponent(noteId)}/${idx}/complete`;
+  // Use externally accessible host for callback (prefer Host header, fallback to tailnet)
+  const callbackHost = req.get("Host") || "100.79.67.17:3811";
+  const callbackUrl = `http://${callbackHost}/api/agent-actions/${encodeURIComponent(noteId)}/${idx}/complete`;
 
   const createNoteUrl = `http://localhost:${PORT}/api/notes`;
   const taskPrompt = `Execute this Snippets agent action:\n\n**${taskLabel}**\n\nIMPORTANT: when done, report status back to Snippets backend by calling the callback URL with JSON.\n\nIf your action creates a new note, you MUST create it via the API so Snippets assigns a proper ID:\n\ncurl -sS -X POST '${createNoteUrl}' -H 'Content-Type: application/json' -d '{"content":"<FULL_MARKDOWN_CONTENT>"}'\n\nThe response JSON has shape { "frontmatter": { "id": "..." }, ... }. Extract the id with: curl ... | jq -r .frontmatter.id\nUse that exact id as linkedNoteId in your callback below. Do NOT write note files to disk directly.\n\n- On success, run:\ncurl -sS -X POST '${callbackUrl}' -H 'Content-Type: application/json' -d '{"jobId":"${jobId}","status":"completed","result":"<YOUR_RESULT_HERE>","linkedNoteId":"<NOTE_ID_FROM_API_RESPONSE>","linkedNoteTitle":"<NOTE_TITLE>"}'\n\n- On failure, run:\ncurl -sS -X POST '${callbackUrl}' -H 'Content-Type: application/json' -d '{"jobId":"${jobId}","status":"failed","result":"<EXPLAIN_FAILURE_HERE>"}'\n\nRules for result text:\n- Keep it concise (max 200 words) and start success with ✓\n- Do NOT include filesystem paths like /home/... or notes/...\n- linkedNoteId MUST be the exact id returned by POST /api/notes — never guess or fabricate an id\n- Escape any double quotes in JSON values with backslash`;
@@ -458,7 +460,8 @@ app.post("/api/agent-actions/:noteId/:actionIndex/run", async (req, res) => {
     }
   }, 100);
 
-  // Guard against forever-running UI if callback never comes back.
+  // Guard against forever-running UI if callback never comes back (5 min timeout).
+  const timeoutMs = 5 * 60 * 1000;
   setTimeout(() => {
     const current = agentJobs.get(jobId);
     if (!current || current.status !== "running") return;
@@ -466,10 +469,11 @@ app.post("/api/agent-actions/:noteId/:actionIndex/run", async (req, res) => {
     current.status = "failed";
     current.completedAt = new Date().toISOString();
     if (!current.result) {
-      current.result = "Timed out waiting for action completion callback. Please rerun.";
+      current.result = "Action timed out (5 min) waiting for callback. Please rerun.";
     }
     updateActionJobStatus(noteId, idx, current);
-  }, 15 * 60 * 1000);
+    console.warn(`[timeout] Job ${jobId} timed out after ${timeoutMs}ms`);
+  }, timeoutMs);
 
   res.json({ ok: true, jobId, status: "running" });
 });
