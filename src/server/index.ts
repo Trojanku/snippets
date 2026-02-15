@@ -411,7 +411,7 @@ app.post("/api/agent-actions/:noteId/:actionIndex/run", async (req, res) => {
   const taskLabel = action.label || action.type;
   const callbackUrl = `http://localhost:${PORT}/api/agent-actions/${encodeURIComponent(noteId)}/${idx}/complete`;
 
-  const taskPrompt = `Execute this Snippets agent action:\n\n**${taskLabel}**\n\nIMPORTANT: when done, report status back to Snippets backend by calling the callback URL with your result included in the JSON body.\n\n- On success, run:\ncurl -sS -X POST '${callbackUrl}' -H 'Content-Type: application/json' -d '{"jobId":"${jobId}","status":"completed","result":"<YOUR_RESULT_HERE>"}'\n\n- On failure, run:\ncurl -sS -X POST '${callbackUrl}' -H 'Content-Type: application/json' -d '{"jobId":"${jobId}","status":"failed","result":"<EXPLAIN_FAILURE_HERE>"}'\n\nReplace <YOUR_RESULT_HERE> with a concise summary (max 200 words) of what you did and the outcome. Escape any double quotes in your result with backslash. If successful, start with ✓. If it fails, explain why in <EXPLAIN_FAILURE_HERE>.`;
+  const taskPrompt = `Execute this Snippets agent action:\n\n**${taskLabel}**\n\nIMPORTANT: when done, report status back to Snippets backend by calling the callback URL with JSON.\n\n- On success, run:\ncurl -sS -X POST '${callbackUrl}' -H 'Content-Type: application/json' -d '{"jobId":"${jobId}","status":"completed","result":"<YOUR_RESULT_HERE>","linkedNoteId":"<NEW_NOTE_ID_IF_CREATED>","linkedNoteTitle":"<NEW_NOTE_TITLE_IF_AVAILABLE>"}'\n\n- On failure, run:\ncurl -sS -X POST '${callbackUrl}' -H 'Content-Type: application/json' -d '{"jobId":"${jobId}","status":"failed","result":"<EXPLAIN_FAILURE_HERE>"}'\n\nRules for result text:\n- Keep it concise (max 200 words) and start success with ✓\n- Do NOT include filesystem paths like /home/... or notes/...\n- If you created a note, include linkedNoteId so UI can open it from the parent action forever\n- Escape any double quotes in JSON values with backslash`;
 
   // Trigger task asynchronously in background
   setTimeout(async () => {
@@ -507,6 +507,9 @@ app.post("/api/agent-actions/:noteId/:actionIndex/complete", (req, res) => {
   job.completedAt = new Date().toISOString();
 
   const resultText = typeof req.body?.result === "string" ? req.body.result.trim() : "";
+  const linkedNoteId = typeof req.body?.linkedNoteId === "string" ? req.body.linkedNoteId.trim() : "";
+  const linkedNoteTitle = typeof req.body?.linkedNoteTitle === "string" ? req.body.linkedNoteTitle.trim() : "";
+
   if (resultText) {
     job.result = resultText;
   } else if (status === "failed" && !job.result) {
@@ -515,8 +518,19 @@ app.post("/api/agent-actions/:noteId/:actionIndex/complete", (req, res) => {
     job.result = "Action completed successfully. No detailed result was returned by the agent.";
   }
 
+  if (linkedNoteId) {
+    action.linkedNoteId = linkedNoteId;
+    if (linkedNoteTitle) action.linkedNoteTitle = linkedNoteTitle;
+
+    // Keep a durable connection in frontmatter for future graph/link processing.
+    const existingConnections = note.frontmatter.connections || [];
+    if (!existingConnections.includes(linkedNoteId)) {
+      patchNoteFrontmatter(noteId, { connections: [...existingConnections, linkedNoteId] });
+    }
+  }
+
   updateActionJobStatus(noteId, idx, job);
-  res.json({ ok: true, jobId: job.id, status: job.status });
+  res.json({ ok: true, jobId: job.id, status: job.status, linkedNoteId: linkedNoteId || undefined });
 });
 
 app.get("/api/agent-actions/:noteId/:actionIndex/status", (_req, res) => {

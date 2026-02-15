@@ -18,6 +18,8 @@ export interface NoteSummary {
     jobId?: string;
     jobStatus?: "running" | "completed" | "failed";
     jobStartedAt?: string;
+    linkedNoteId?: string;
+    linkedNoteTitle?: string;
   }[];
   status?: string;
   kind?: "knowledge" | "action" | "idea" | "journal" | "reference" | string;

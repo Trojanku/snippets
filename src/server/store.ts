@@ -37,6 +37,8 @@ export interface NoteFrontmatter {
     jobId?: string;
     jobStatus?: "running" | "completed" | "failed";
     jobStartedAt?: string;
+    linkedNoteId?: string;
+    linkedNoteTitle?: string;
   }[];
   status?: "raw" | "queued" | "processing" | "processed" | "failed" | string;
   kind?: "knowledge" | "action" | "idea" | "journal" | "reference" | string;

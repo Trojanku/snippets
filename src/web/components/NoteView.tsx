@@ -310,6 +310,14 @@ export function NoteView() {
                       <div className="action-result-content text-sm leading-1.6 text-ink">
                         <Markdown>{a.result}</Markdown>
                       </div>
+                      {a.linkedNoteId && (
+                        <button
+                          className="mt-2 text-xs font-semibold text-focus hover:underline"
+                          onClick={() => void openNote(a.linkedNoteId!)}
+                        >
+                          Open generated note{a.linkedNoteTitle ? `: ${a.linkedNoteTitle}` : ""}
+                        </button>
+                      )}
                     </div>
                   )}
 
