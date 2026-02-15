@@ -6,15 +6,20 @@ export function Capture() {
   const { openNote } = useApp();
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setError(null);
     if (!content.trim()) return;
     setSaving(true);
     try {
       const note = await api.createNote(content.trim());
       setContent("");
       await openNote(note.frontmatter.id);
+    } catch (err) {
+      setError(`Failed to save: ${err instanceof Error ? err.message : String(err)}`);
+      console.error("[capture] Error creating note:", err);
     } finally {
       setSaving(false);
     }
@@ -34,6 +39,11 @@ export function Capture() {
         autoFocus
         rows={12}
       />
+      {error && (
+        <div className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2">
+          <p className="text-sm text-danger">{error}</p>
+        </div>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="text-xs uppercase tracking-widest text-ink-soft">
           Write freely. Processing runs automatically.
