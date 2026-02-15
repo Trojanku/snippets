@@ -200,18 +200,32 @@ app.post("/api/notes", async (req, res) => {
   if (!content || typeof content !== "string") {
     return res.status(400).json({ error: "content is required" });
   }
-  const note = createNote(content);
+
+  let note;
+  try {
+    note = createNote(content);
+  } catch (err) {
+    const errMsg = `Failed to create note: ${String(err)}`;
+    console.error(`[notes] ${errMsg}`);
+    return res.status(500).json({ error: errMsg });
+  }
   
   // Queue for AI processing
-  fs.mkdirSync(PENDING_DIR, { recursive: true });
-  fs.writeFileSync(path.join(PENDING_DIR, note.frontmatter.id), "");
-  setNoteStatus(note.frontmatter.id, "queued");
-  console.log(`[queue] Note ${note.frontmatter.id} queued for processing`);
+  try {
+    fs.mkdirSync(PENDING_DIR, { recursive: true });
+    fs.writeFileSync(path.join(PENDING_DIR, note.frontmatter.id), "");
+    setNoteStatus(note.frontmatter.id, "queued");
+    console.log(`[queue] Note ${note.frontmatter.id} queued for processing`);
 
-  // Trigger OpenClaw agent immediately
-  const result = await triggerAgent(note.frontmatter.id);
-  if (!result.ok) {
-    setNoteStatus(note.frontmatter.id, "failed", result.error || "trigger failed");
+    // Trigger OpenClaw agent immediately
+    const result = await triggerAgent(note.frontmatter.id);
+    if (!result.ok) {
+      setNoteStatus(note.frontmatter.id, "failed", result.error || "trigger failed");
+      console.warn(`[notes] Agent trigger failed for ${note.frontmatter.id}: ${result.error}`);
+    }
+  } catch (err) {
+    console.warn(`[notes] Queueing or trigger error for ${note.frontmatter.id}: ${String(err)}`);
+    // Still return the created note; async processing can be retried
   }
 
   res.status(201).json(note);
