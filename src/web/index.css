@@ -458,6 +458,14 @@ html.dark {
     @apply flex w-full items-center gap-2 rounded-lg border px-2 py-1.5 text-left transition-colors;
   }
 
+  .folder-row-shell {
+    @apply flex items-center gap-1;
+  }
+
+  .folder-toggle {
+    @apply h-7 w-7 min-w-7 rounded-md border border-line/55 bg-paper/35 text-xs leading-none text-ink-soft transition-colors hover:border-line-strong hover:bg-paper hover:text-ink disabled:cursor-default disabled:opacity-50;
+  }
+
   .folder-row-idle {
     @apply border-transparent text-ink-soft hover:border-line/70 hover:bg-paper/65 hover:text-ink;
   }
@@ -466,12 +474,20 @@ html.dark {
     @apply border-line-strong bg-accent-soft/80 text-ink;
   }
 
+  .folder-children {
+    @apply mt-1 flex flex-col gap-1;
+  }
+
   .folder-note-row {
     @apply w-full truncate rounded-md border border-transparent py-1.5 pr-2 text-left text-sm text-ink-soft transition-colors hover:border-line/65 hover:bg-paper/65 hover:text-ink;
   }
 
+  .folder-note-row-active {
+    @apply border-line/80 bg-paper/65 text-ink;
+  }
+
   .folder-menu {
-    @apply fixed z-40 min-w-40 rounded-lg border border-line/70 bg-paper/95 p-1 shadow-lg;
+    @apply absolute z-40 min-w-40 rounded-lg border border-line/70 bg-paper/95 p-1 shadow-lg;
   }
 
   .folder-menu-item {

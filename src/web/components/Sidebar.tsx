@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import type { NotesTreeNode } from "../lib/api.ts";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { NotesTreeFolderNode, NotesTreeNode } from "../lib/api.ts";
 import { useApp } from "../App.tsx";
 import { api } from "../lib/api.ts";
 
@@ -12,38 +12,33 @@ const BUILT_IN_FOLDERS = new Set([
   "reference",
 ]);
 
-interface FolderRow {
-  path: string;
-  name: string;
-  icon: string;
-  depth: number;
-}
-
 interface ContextMenuState {
-  path: string;
+  kind: "folder" | "note";
+  path?: string;
+  noteId?: string;
+  noteTitle?: string;
+  protected?: boolean;
   x: number;
   y: number;
 }
 
-function flattenFolders(nodes: NotesTreeNode[], depth = 0, out: FolderRow[] = []): FolderRow[] {
+function collectFolderPaths(nodes: NotesTreeNode[], out: Set<string> = new Set()): Set<string> {
   for (const node of nodes) {
     if (node.type !== "folder") continue;
-    out.push({
-      path: node.path,
-      name: node.name,
-      icon: node.icon || "📁",
-      depth,
-    });
-    flattenFolders(node.children, depth + 1, out);
+    out.add(node.path);
+    collectFolderPaths(node.children, out);
   }
   return out;
 }
 
 export function Sidebar() {
-  const { state, setSelectedFolder, refresh, openNote } = useApp();
-  const { notes, tree, selectedFolder } = state;
+  const { state, setSelectedFolder, refresh, openNote, dispatch } = useApp();
+  const { notes, tree, selectedFolder, activeNote } = state;
   const [removingFolder, setRemovingFolder] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => new Set());
+  const sidebarRef = useRef<HTMLElement | null>(null);
+  const contextMenuRef = useRef<HTMLDivElement | null>(null);
 
   const folderCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -59,37 +54,52 @@ export function Sidebar() {
     return counts;
   }, [notes]);
 
-  const folderRows = useMemo(() => {
+  const treeNodes = useMemo<NotesTreeNode[]>(() => {
     if (!tree) return [];
-    const treeNodes =
-      tree.type === "folder" && (tree.path === "" || tree.name.toLowerCase() === "notes")
-        ? tree.children
-        : [tree];
-    return flattenFolders(treeNodes);
+    return tree.type === "folder" && (tree.path === "" || tree.name.toLowerCase() === "notes")
+      ? tree.children
+      : [tree];
   }, [tree]);
 
-  const notesInSelectedFolder = useMemo(() => {
-    if (!selectedFolder) return [];
-    return notes
-      .filter((n) => (n.folderPath || "") === selectedFolder)
-      .sort((a, b) => +new Date(b.updated || b.created) - +new Date(a.updated || a.created));
-  }, [notes, selectedFolder]);
+  useEffect(() => {
+    const validPaths = collectFolderPaths(treeNodes);
+    setExpandedFolders((prev) => {
+      const next = new Set<string>();
+      for (const p of prev) {
+        if (validPaths.has(p)) next.add(p);
+      }
+      return next.size === prev.size ? prev : next;
+    });
+  }, [treeNodes]);
 
   useEffect(() => {
-    function dismiss() {
+    if (!contextMenu || !contextMenuRef.current || !sidebarRef.current) return;
+    const hostRect = sidebarRef.current.getBoundingClientRect();
+    const rect = contextMenuRef.current.getBoundingClientRect();
+    const nextX = Math.max(8, Math.min(contextMenu.x, hostRect.width - rect.width - 8));
+    const nextY = Math.max(8, Math.min(contextMenu.y, hostRect.height - rect.height - 8));
+    if (nextX !== contextMenu.x || nextY !== contextMenu.y) {
+      setContextMenu((prev) => (prev ? { ...prev, x: nextX, y: nextY } : prev));
+    }
+  }, [contextMenu]);
+
+  useEffect(() => {
+    function dismiss(e?: Event) {
+      const target = e?.target as Node | null;
+      if (target && contextMenuRef.current?.contains(target)) {
+        return;
+      }
       setContextMenu(null);
     }
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") dismiss();
     }
-    window.addEventListener("click", dismiss);
-    window.addEventListener("contextmenu", dismiss);
+    window.addEventListener("pointerdown", dismiss, true);
     window.addEventListener("resize", dismiss);
     window.addEventListener("scroll", dismiss, true);
     window.addEventListener("keydown", onKeyDown);
     return () => {
-      window.removeEventListener("click", dismiss);
-      window.removeEventListener("contextmenu", dismiss);
+      window.removeEventListener("pointerdown", dismiss, true);
       window.removeEventListener("resize", dismiss);
       window.removeEventListener("scroll", dismiss, true);
       window.removeEventListener("keydown", onKeyDown);
@@ -124,8 +134,139 @@ export function Sidebar() {
     }
   }
 
+  async function handleDeleteNote(noteId: string, noteTitle: string) {
+    setContextMenu(null);
+    const approved = window.confirm(`Delete note "${noteTitle}" permanently?`);
+    if (!approved) return;
+    await api.deleteNote(noteId);
+    if (activeNote?.frontmatter.id === noteId) {
+      dispatch({ type: "SET_ACTIVE_NOTE", note: null });
+    }
+    await refresh();
+  }
+
+  async function handleRenameNote(noteId: string) {
+    setContextMenu(null);
+    await openNote(noteId);
+    window.setTimeout(() => {
+      window.dispatchEvent(new Event("focus-note-title"));
+    }, 40);
+  }
+
+  function toggleFolder(folderPath: string) {
+    setExpandedFolders((prev) => {
+      const next = new Set(prev);
+      if (next.has(folderPath)) next.delete(folderPath);
+      else next.add(folderPath);
+      return next;
+    });
+  }
+
+  function openFolderMenu(e: React.MouseEvent, folderPath: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    const hostRect = sidebarRef.current?.getBoundingClientRect();
+    const x = hostRect ? e.clientX - hostRect.left : e.clientX;
+    const y = hostRect ? e.clientY - hostRect.top : e.clientY;
+    setContextMenu({
+      kind: "folder",
+      path: folderPath,
+      protected: BUILT_IN_FOLDERS.has(folderPath),
+      x,
+      y,
+    });
+  }
+
+  function openNoteMenu(e: React.MouseEvent, noteId: string, noteTitle: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    const hostRect = sidebarRef.current?.getBoundingClientRect();
+    const x = hostRect ? e.clientX - hostRect.left : e.clientX;
+    const y = hostRect ? e.clientY - hostRect.top : e.clientY;
+    setContextMenu({
+      kind: "note",
+      noteId,
+      noteTitle,
+      x,
+      y,
+    });
+  }
+
+  function renderFolderNode(node: NotesTreeFolderNode, depth: number): React.ReactNode {
+    const isExpanded = expandedFolders.has(node.path);
+    const isSelected = selectedFolder === node.path;
+    const count = folderCounts.get(node.path) || 0;
+    const folderChildren = node.children.filter((c): c is NotesTreeFolderNode => c.type === "folder");
+    const noteChildren = node.children.filter((c) => c.type === "note");
+    const hasChildren = node.children.length > 0;
+
+    return (
+      <div key={node.path} className="tree-node">
+        <div className="folder-row-shell" style={{ paddingLeft: `${depth * 14}px` }}>
+          <button
+            type="button"
+            className="folder-toggle"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (hasChildren) toggleFolder(node.path);
+            }}
+            disabled={!hasChildren}
+            aria-label={isExpanded ? `Collapse ${node.name}` : `Expand ${node.name}`}
+            aria-expanded={hasChildren ? isExpanded : undefined}
+          >
+            {hasChildren ? (isExpanded ? "▾" : "▸") : "•"}
+          </button>
+          <button
+            type="button"
+            className={`folder-row ${isSelected ? "folder-row-active" : "folder-row-idle"}`}
+            onClick={() => setSelectedFolder(node.path)}
+            onContextMenu={(e) => openFolderMenu(e, node.path)}
+          >
+            <span className="truncate text-sm">
+              <span className="mr-2" aria-hidden="true">
+                {node.icon || "📁"}
+              </span>
+              {node.name}
+            </span>
+            <span className={isSelected ? "tree-pill-active" : "tree-pill-idle"}>{count}</span>
+          </button>
+        </div>
+
+        {isExpanded && (
+          <div className="folder-children">
+            {folderChildren.map((child) => renderFolderNode(child, depth + 1))}
+            {noteChildren.map((note) => {
+              const isActiveNote = activeNote?.frontmatter.id === note.id;
+              return (
+                <button
+                  key={note.path}
+                  type="button"
+                  className={`folder-note-row ${isActiveNote ? "folder-note-row-active" : ""}`}
+                  style={{ paddingLeft: `${(depth + 1) * 14 + 26}px` }}
+                  onClick={() => {
+                    setSelectedFolder(node.path);
+                    if (note.id) void openNote(note.id);
+                  }}
+                  onContextMenu={(e) => {
+                    if (!note.id) return;
+                    openNoteMenu(e, note.id, note.title || note.id || note.name);
+                  }}
+                >
+                  {note.title || note.id || note.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <aside className="panel panel-rail sticky top-24 flex max-h-[calc(100vh-112px)] flex-col overflow-hidden p-3 max-[1060px]:static max-[1060px]:max-h-none">
+    <aside
+      ref={sidebarRef}
+      className="panel panel-rail sticky top-24 flex max-h-[calc(100vh-112px)] flex-col overflow-hidden p-3 max-[1060px]:static max-[1060px]:max-h-none"
+    >
       <div className="mb-2 border-b border-line/70 pb-2">
         <h3 className="text-xs uppercase tracking-widest text-ink-soft">Folders</h3>
       </div>
@@ -143,71 +284,66 @@ export function Sidebar() {
             </span>
           </button>
 
-          {folderRows.map((row) => {
-            const isSelected = selectedFolder === row.path;
-            const count = folderCounts.get(row.path) || 0;
-            const isBuiltIn = BUILT_IN_FOLDERS.has(row.path);
-            return (
-              <div key={row.path}>
-                <button
-                  type="button"
-                  className={`folder-row ${isSelected ? "folder-row-active" : "folder-row-idle"}`}
-                  style={{ paddingLeft: `${10 + row.depth * 14}px` }}
-                  onClick={() => setSelectedFolder(row.path)}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    if (isBuiltIn) return;
-                    setContextMenu({
-                      path: row.path,
-                      x: e.clientX,
-                      y: e.clientY,
-                    });
-                  }}
-                >
-                  <span className="truncate text-sm">
-                    <span className="mr-2" aria-hidden="true">
-                      {row.icon}
-                    </span>
-                    {row.name}
-                  </span>
-                  <span className={isSelected ? "tree-pill-active" : "tree-pill-idle"}>{count}</span>
-                </button>
-
-                {isSelected && notesInSelectedFolder.length > 0 && (
-                  <div className="mt-1 flex flex-col gap-1 pb-1">
-                    {notesInSelectedFolder.map((note) => (
-                      <button
-                        key={note.id}
-                        type="button"
-                        className="folder-note-row"
-                        style={{ paddingLeft: `${26 + row.depth * 14}px` }}
-                        onClick={() => void openNote(note.id)}
-                      >
-                        {note.title || note.id}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {treeNodes
+            .filter((node): node is NotesTreeFolderNode => node.type === "folder")
+            .map((node) => renderFolderNode(node, 0))}
         </div>
       </div>
 
       {contextMenu && (
         <div
+          ref={contextMenuRef}
           className="folder-menu"
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onClick={(e) => e.stopPropagation()}
         >
-          <button
-            type="button"
-            className="folder-menu-item danger"
-            disabled={removingFolder === contextMenu.path}
-            onClick={() => void handleRemoveFolder(contextMenu.path)}
-          >
-            {removingFolder === contextMenu.path ? "Removing..." : "Remove folder"}
-          </button>
+          {contextMenu.kind === "folder" && contextMenu.path && (
+            <button
+              type="button"
+              className="folder-menu-item danger"
+              disabled={contextMenu.protected || removingFolder === contextMenu.path}
+              onClick={() => void handleRemoveFolder(contextMenu.path!)}
+            >
+              {contextMenu.protected
+                ? "Built-in folder (protected)"
+                : removingFolder === contextMenu.path
+                  ? "Removing..."
+                  : "Remove folder"}
+            </button>
+          )}
+          {contextMenu.kind === "note" && contextMenu.noteId && (
+            <>
+              <button
+                type="button"
+                className="folder-menu-item"
+                onClick={() => {
+                  setContextMenu(null);
+                  void openNote(contextMenu.noteId!);
+                }}
+              >
+                Open note
+              </button>
+              <button
+                type="button"
+                className="folder-menu-item"
+                onClick={() => void handleRenameNote(contextMenu.noteId!)}
+              >
+                Rename title
+              </button>
+              <button
+                type="button"
+                className="folder-menu-item danger"
+                onClick={() =>
+                  void handleDeleteNote(
+                    contextMenu.noteId!,
+                    contextMenu.noteTitle || contextMenu.noteId!
+                  )
+                }
+              >
+                Delete note
+              </button>
+            </>
+          )}
         </div>
       )}
     </aside>

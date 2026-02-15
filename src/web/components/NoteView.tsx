@@ -46,6 +46,7 @@ export function NoteView() {
   const pollTimersRef = useRef<Map<number, ReturnType<typeof setInterval>>>(new Map());
   const savePulseRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleSaveSeqRef = useRef(0);
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
 
   const fm = note?.frontmatter ?? null;
 
@@ -75,6 +76,19 @@ export function NoteView() {
   useEffect(() => {
     localStorage.setItem("notes-editor-mode", editorMode);
   }, [editorMode]);
+
+  useEffect(() => {
+    function onFocusTitle() {
+      const input = titleInputRef.current;
+      if (!input) return;
+      input.focus();
+      input.select();
+    }
+    window.addEventListener("focus-note-title", onFocusTitle);
+    return () => {
+      window.removeEventListener("focus-note-title", onFocusTitle);
+    };
+  }, []);
 
   useEffect(() => {
     titleSaveSeqRef.current += 1;
@@ -382,6 +396,7 @@ export function NoteView() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <input
+            ref={titleInputRef}
             className="note-title-input"
             value={titleDraft}
             onChange={(e) => setTitleDraft(e.target.value)}
