@@ -77,23 +77,27 @@ export function Sidebar() {
 
       return (
         <div key={`folder:${key}`} className="tree-node">
-          <div className="flex items-center gap-1" style={{ paddingLeft: `${depth * 8}px` }}>
+          <div
+            className={`flex cursor-pointer items-center gap-1 rounded-md transition-colors ${isSelected ? "" : "hover:bg-paper/50"}`}
+            style={{ paddingLeft: `${depth * 8}px` }}
+            onClick={() => {
+              selectFolder(node.path);
+              if (!isExpanded) toggleFolder(key);
+            }}
+          >
             <button
               className="tree-toggle"
-              onClick={() => toggleFolder(key)}
+              onClick={(e) => { e.stopPropagation(); toggleFolder(key); }}
               aria-label={isExpanded ? "Collapse folder" : "Expand folder"}
             >
               {isExpanded ? "▾" : "▸"}
             </button>
-            <button
-              className={isSelected ? "tree-folder-active" : "tree-folder-idle"}
-              onClick={() => selectFolder(node.path)}
-            >
+            <span className={isSelected ? "tree-folder-active" : "tree-folder-idle"}>
               <span className="mr-2" aria-hidden="true">
                 {node.icon || "📁"}
               </span>
               {node.name}
-            </button>
+            </span>
             <span className={isSelected ? "tree-pill-active" : "tree-pill-idle"}>{count}</span>
           </div>
 
