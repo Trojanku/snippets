@@ -118,18 +118,49 @@ app.get("/api/events", (_req, res) => {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache",
     Connection: "keep-alive",
+    "X-Accel-Buffering": "no",
   });
   res.write("data: connected\n\n");
   sseClients.add(res);
-  _req.on("close", () => sseClients.delete(res));
+
+  // Cleanup on close
+  _req.on("close", () => {
+    sseClients.delete(res);
+  });
+
+  // Cleanup on error
+  res.on("error", () => {
+    sseClients.delete(res);
+  });
+
+  // Send heartbeat every 30s to keep connection alive
+  const heartbeat = setInterval(() => {
+    if (!res.headersSent || res.closed) {
+      clearInterval(heartbeat);
+      sseClients.delete(res);
+      return;
+    }
+    res.write(":heartbeat\n\n");
+  }, 30 * 1000);
 });
 
 function broadcast(event: string, data?: string) {
   const payload = data
     ? `event: ${event}\ndata: ${data}\n\n`
     : `event: ${event}\ndata: {}\n\n`;
+
+  const deadClients = [];
   for (const client of sseClients) {
-    client.write(payload);
+    try {
+      client.write(payload);
+    } catch (err) {
+      deadClients.push(client);
+    }
+  }
+
+  // Clean up any dead clients
+  for (const client of deadClients) {
+    sseClients.delete(client);
   }
 }
 
