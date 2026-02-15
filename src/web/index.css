@@ -81,6 +81,7 @@ html.dark {
 @layer components {
   .panel {
     @apply border border-line/65 rounded-2xl bg-paper/80 backdrop-blur;
+    min-width: 0;
     box-shadow: 0 12px 28px rgba(12, 14, 16, 0.06);
   }
 
@@ -104,6 +105,7 @@ html.dark {
 
   .stream-shell {
     @apply rounded-3xl border border-line/60 bg-paper/60 p-3;
+    overflow: hidden;
     box-shadow: 0 18px 42px rgba(8, 9, 10, 0.08);
   }
 
@@ -112,7 +114,11 @@ html.dark {
   }
 
   .stream-grid {
-    @apply grid gap-3 md:grid-cols-[280px_minmax(0,1fr)];
+    @apply grid gap-3 md:grid-cols-[minmax(0,280px)_minmax(0,1fr)];
+  }
+
+  .stream-grid > * {
+    min-width: 0;
   }
 
   .stream-grid-focus {
@@ -120,7 +126,7 @@ html.dark {
   }
 
   .stream-rail {
-    @apply flex min-h-[460px] flex-col rounded-2xl border border-line/55 bg-paper/30 p-3;
+    @apply flex min-h-[460px] min-w-0 flex-col rounded-2xl border border-line/55 bg-paper/30 p-3;
   }
 
   .control {
@@ -419,7 +425,7 @@ html.dark {
   }
 
   .folder-row {
-    @apply flex w-full items-center gap-2 rounded-lg border px-2 py-1.5 text-left transition-colors;
+    @apply flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-lg border px-2 py-1.5 text-left transition-colors;
   }
 
   .folder-row-shell {

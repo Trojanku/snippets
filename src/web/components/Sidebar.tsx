@@ -222,7 +222,7 @@ export function Sidebar() {
             onClick={() => setSelectedFolder(node.path)}
             onContextMenu={(e) => openFolderMenu(e, node.path)}
           >
-            <span className="truncate text-sm">
+            <span className="min-w-0 flex-1 truncate text-sm">
               <span className="mr-2" aria-hidden="true">
                 {node.icon || "📁"}
               </span>
@@ -265,7 +265,7 @@ export function Sidebar() {
   return (
     <aside
       ref={sidebarRef}
-      className="panel panel-rail sticky top-24 flex max-h-[calc(100vh-112px)] flex-col overflow-hidden p-3 max-[1060px]:static max-[1060px]:max-h-none"
+      className="panel panel-rail sticky top-24 flex w-full min-w-0 max-h-[calc(100vh-112px)] flex-col overflow-hidden p-3 max-[1060px]:static max-[1060px]:max-h-none"
     >
       <div className="mb-2 border-b border-line/70 pb-2">
         <h3 className="text-xs uppercase tracking-widest text-ink-soft">Folders</h3>
@@ -278,7 +278,7 @@ export function Sidebar() {
             className={`folder-row ${selectedFolder === "" ? "folder-row-active" : "folder-row-idle"}`}
             onClick={() => setSelectedFolder("")}
           >
-            <span className="truncate text-sm">All notes</span>
+            <span className="min-w-0 flex-1 truncate text-sm">All notes</span>
             <span className={selectedFolder === "" ? "tree-pill-active" : "tree-pill-idle"}>
               {notes.length}
             </span>

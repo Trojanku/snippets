@@ -212,11 +212,11 @@ export function App() {
         </nav>
 
         <div
-          className={`mx-auto grid w-full max-w-[1760px] gap-5 px-6 py-6 max-[1560px]:grid-cols-[210px_minmax(0,1fr)] max-[1560px]:gap-4 max-[1060px]:grid-cols-1 max-[1060px]:gap-4 max-[700px]:px-4 max-[700px]:py-4 ${
+          className={`mx-auto grid w-full max-w-[1760px] gap-5 overflow-x-hidden px-6 py-6 max-[1560px]:grid-cols-[210px_minmax(0,1fr)] max-[1560px]:gap-4 max-[1060px]:grid-cols-1 max-[1060px]:gap-4 max-[700px]:px-4 max-[700px]:py-4 ${
             showRightRail ? "grid-cols-[230px_minmax(0,1fr)_260px]" : "grid-cols-[230px_minmax(0,1fr)]"
           }`}
         >
-          <div className="max-[1060px]:order-2">
+          <div className="min-w-0 max-[1060px]:order-2">
             <Sidebar />
           </div>
 
@@ -226,8 +226,8 @@ export function App() {
           </main>
 
           {showRightRail && (
-            <div className="max-[1560px]:col-start-2 max-[1560px]:row-start-2 max-[1060px]:order-3">
-              <div className="sticky top-24 flex max-h-[calc(100vh-112px)] flex-col gap-4 overflow-auto max-[1060px]:static max-[1060px]:max-h-none">
+            <div className="min-w-0 max-[1560px]:col-start-2 max-[1560px]:row-start-2 max-[1060px]:order-3">
+              <div className="sticky top-24 flex max-h-[calc(100vh-112px)] min-w-0 flex-col gap-4 overflow-auto max-[1060px]:static max-[1060px]:max-h-none">
                 {showActionsRail && <SuggestedActionsPanel sticky={false} />}
                 {showConnections && <ConnectionsPanel sticky={false} />}
               </div>
