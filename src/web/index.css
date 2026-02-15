@@ -9,9 +9,9 @@
   --color-ink-soft: 103 97 90;
   --color-line: 206 198 184;
   --color-line-strong: 176 166 150;
-  --color-focus: 98 131 113;
-  --color-accent: 109 142 124;
-  --color-accent-soft: 225 235 227;
+  --color-focus: 71 85 105;
+  --color-accent: 100 116 139;
+  --color-accent-soft: 226 232 240;
   --color-danger: 174 89 75;
   --color-danger-soft: 247 231 226;
   --color-caution: 195 150 95;
@@ -29,9 +29,9 @@ html.dark {
   --color-ink-soft: 171 166 157;
   --color-line: 62 65 69;
   --color-line-strong: 91 95 100;
-  --color-focus: 145 189 162;
-  --color-accent: 129 168 144;
-  --color-accent-soft: 36 46 41;
+  --color-focus: 165 180 200;
+  --color-accent: 148 163 184;
+  --color-accent-soft: 30 41 59;
   --color-danger: 211 120 102;
   --color-danger-soft: 56 33 29;
   --color-caution: 220 173 114;
@@ -47,9 +47,9 @@ html.dark {
     --color-ink-soft: 171 166 157;
     --color-line: 62 65 69;
     --color-line-strong: 91 95 100;
-    --color-focus: 145 189 162;
-    --color-accent: 129 168 144;
-    --color-accent-soft: 36 46 41;
+    --color-focus: 165 180 200;
+    --color-accent: 148 163 184;
+    --color-accent-soft: 30 41 59;
     --color-danger: 211 120 102;
     --color-danger-soft: 56 33 29;
     --color-caution: 220 173 114;

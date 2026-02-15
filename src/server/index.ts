@@ -410,10 +410,8 @@ app.post("/api/agent-actions/:noteId/:actionIndex/run", async (req, res) => {
   // Queue action for processing via OpenClaw webhook
   const taskLabel = action.label || action.type;
   const callbackUrl = `http://localhost:${PORT}/api/agent-actions/${encodeURIComponent(noteId)}/${idx}/complete`;
-  const completeCmd = `curl -sS -X POST '${callbackUrl}' -H 'Content-Type: application/json' -d '{"jobId":"${jobId}","status":"completed"}'`;
-  const failCmd = `curl -sS -X POST '${callbackUrl}' -H 'Content-Type: application/json' -d '{"jobId":"${jobId}","status":"failed"}'`;
 
-  const taskPrompt = `Execute this Snippets agent action:\n\n**${taskLabel}**\n\nIMPORTANT: when done, report status back to Snippets backend:\n- On success run exactly:\n${completeCmd}\n- On failure run exactly:\n${failCmd}\n\nAfter running the callback command, provide the user-facing result concisely (max 200 words). If successful, start with ✓. If it fails, explain why.`;
+  const taskPrompt = `Execute this Snippets agent action:\n\n**${taskLabel}**\n\nIMPORTANT: when done, report status back to Snippets backend by calling the callback URL with your result included in the JSON body.\n\n- On success, run:\ncurl -sS -X POST '${callbackUrl}' -H 'Content-Type: application/json' -d '{"jobId":"${jobId}","status":"completed","result":"<YOUR_RESULT_HERE>"}'\n\n- On failure, run:\ncurl -sS -X POST '${callbackUrl}' -H 'Content-Type: application/json' -d '{"jobId":"${jobId}","status":"failed","result":"<EXPLAIN_FAILURE_HERE>"}'\n\nReplace <YOUR_RESULT_HERE> with a concise summary (max 200 words) of what you did and the outcome. Escape any double quotes in your result with backslash. If successful, start with ✓. If it fails, explain why in <EXPLAIN_FAILURE_HERE>.`;
 
   // Trigger task asynchronously in background
   setTimeout(async () => {
@@ -514,7 +512,7 @@ app.post("/api/agent-actions/:noteId/:actionIndex/complete", (req, res) => {
   } else if (status === "failed" && !job.result) {
     job.result = "Action failed in hook execution.";
   } else if (status === "completed" && !job.result) {
-    job.result = "Completed. Result was delivered via hook output.";
+    job.result = "Action completed successfully. No detailed result was returned by the agent.";
   }
 
   updateActionJobStatus(noteId, idx, job);

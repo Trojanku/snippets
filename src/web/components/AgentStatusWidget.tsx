@@ -78,23 +78,13 @@ export function AgentStatusWidget() {
   }, [status, error]);
 
   return (
-    <div className={`hidden min-w-56 rounded-xl border px-3 py-2.5 md:flex md:flex-col md:gap-1.5 ${tone.shell}`}>
-      <div className="flex items-center gap-2">
-        <span className={`h-2.5 w-2.5 rounded-full ${tone.dot} ${status?.state === "online" ? "animate-pulse" : ""}`} />
-        <p className="text-[11px] uppercase tracking-widest text-ink-soft">OpenClaw agent</p>
-        <span className={`ml-auto text-[11px] font-semibold uppercase tracking-widest ${tone.text}`}>{tone.headline}</span>
-      </div>
-
-      <p className="text-xs text-ink-soft">{tone.sub}</p>
-
-      <div className="flex items-center gap-1.5 text-[11px] text-ink-soft">
-        <span className="rounded-full border border-line/70 bg-paper/45 px-2 py-0.5">pending {status?.pendingQueue ?? 0}</span>
-        <span className="rounded-full border border-line/70 bg-paper/45 px-2 py-0.5">running {status?.runningJobs ?? 0}</span>
-      </div>
-
-      <p className="text-[11px] text-ink-soft">
-        Last success: <span className="text-ink">{formatRelativeTime(status?.lastSuccessAt)}</span>
-      </p>
+    <div className={`hidden items-center gap-2.5 rounded-full border px-3 py-1.5 md:flex ${tone.shell}`}>
+      <span className={`h-2 w-2 shrink-0 rounded-full ${tone.dot} ${status?.state === "online" ? "animate-pulse" : ""}`} />
+      <p className="text-[11px] uppercase tracking-widest text-ink-soft">Agent</p>
+      <span className={`text-[11px] font-semibold uppercase tracking-widest ${tone.text}`}>{tone.headline}</span>
+      {(status?.pendingQueue || status?.runningJobs) ? (
+        <span className="text-[11px] text-ink-soft">{status?.pendingQueue ?? 0}p / {status?.runningJobs ?? 0}r</span>
+      ) : null}
     </div>
   );
 }

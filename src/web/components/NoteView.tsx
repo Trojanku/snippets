@@ -301,7 +301,11 @@ export function NoteView() {
                     <p className="animate-pulse text-xs font-semibold uppercase tracking-wider text-accent">Running…</p>
                   )}
                   {a.result && (
-                    <div className="rounded-lg border border-accent/45 bg-accent-soft/25 px-3 py-2.5">
+                    <div className={`rounded-lg border px-3 py-2.5 ${
+                      a.result.startsWith("Action completed successfully. No detailed result")
+                        ? "border-line/60 bg-paper-deep/30"
+                        : "border-accent/45 bg-accent-soft/25"
+                    }`}>
                       <p className="mb-1 text-[11px] uppercase tracking-widest text-ink-soft">Result</p>
                       <div className="action-result-content text-sm leading-1.6 text-ink">
                         <Markdown>{a.result}</Markdown>
@@ -336,6 +340,11 @@ export function NoteView() {
                       {isAgent && !isCompleted && !isRunning && (
                         <button className="btn-muted" title="Run this action" onClick={() => handleRunAction(i)}>
                           Run
+                        </button>
+                      )}
+                      {isAgent && isCompleted && !isRunning && (
+                        <button className="btn-muted" title="Re-run this action" onClick={() => handleRunAction(i)}>
+                          Re-run
                         </button>
                       )}
                       {isRunning && (
