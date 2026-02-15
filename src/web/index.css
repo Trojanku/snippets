@@ -230,29 +230,13 @@ html.dark {
     @apply border-line/55 bg-paper/25;
   }
 
-  .editor-mode-toggle {
-    @apply flex rounded-full border border-line/65 bg-paper/60 p-0.5;
-  }
-
-  .editor-mode-btn {
-    @apply rounded-full px-2.5 py-1 text-xs uppercase tracking-wider text-ink-soft transition-colors;
-  }
-
-  .editor-mode-btn:hover {
-    @apply text-ink;
-  }
-
-  .editor-mode-btn-active {
-    @apply border border-line-strong bg-accent-soft text-ink;
-  }
-
   .stream-writer-surface {
-    @apply rounded-2xl border border-line/55 bg-paper/85 p-2.5;
-    box-shadow: 0 10px 30px rgba(10, 10, 10, 0.05);
+    @apply rounded-2xl bg-transparent p-0;
+    box-shadow: none;
   }
 
   .stream-writer-surface-rich {
-    @apply bg-paper/80;
+    @apply bg-transparent;
   }
 
   .stream-editor-pane {
@@ -272,27 +256,7 @@ html.dark {
   }
 
   .rich-editor-shell {
-    @apply rounded-xl border border-line/45 bg-paper/95;
-  }
-
-  .rich-toolbar {
-    @apply flex flex-wrap gap-1 border-b border-line/45 bg-paper-deep/45 px-2 py-1.5;
-  }
-
-  .rich-toolbar-btn {
-    @apply rounded-md border border-line/50 bg-paper/70 px-2.5 py-1 text-[11px] uppercase tracking-[0.12em] text-ink-soft transition-colors;
-  }
-
-  .rich-toolbar-btn:hover {
-    @apply border-line-strong bg-paper text-ink;
-  }
-
-  .rich-toolbar-btn-active {
-    @apply border-line-strong bg-accent-soft text-ink;
-  }
-
-  .rich-toolbar-btn:disabled {
-    @apply opacity-50;
+    @apply rounded-xl border border-transparent bg-transparent;
   }
 
   .rich-editor-body {
@@ -304,7 +268,7 @@ html.dark {
   }
 
   .rich-editor-content {
-    @apply min-h-[44vh] max-h-[58vh] overflow-y-auto px-4 py-3 font-serif text-[18px] leading-[1.8] text-ink;
+    @apply min-h-[44vh] max-h-[58vh] overflow-y-auto px-3 py-2 font-serif text-[18px] leading-[1.8] text-ink;
     outline: none;
   }
 

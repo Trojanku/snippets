@@ -10,7 +10,6 @@ interface ActionEditState {
 }
 
 type SaveState = "idle" | "typing" | "saving" | "saved" | "error";
-type EditorMode = "raw" | "rich";
 type TitleSaveState = "idle" | "saving" | "error";
 
 function isProcessing(status?: string): boolean {
@@ -32,7 +31,6 @@ export function NoteView() {
   const [runningActions, setRunningActions] = useState<Record<number, boolean>>({});
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [editorMode, setEditorMode] = useState<EditorMode>("rich");
   const [titleDraft, setTitleDraft] = useState("");
   const [titleSaveState, setTitleSaveState] = useState<TitleSaveState>("idle");
   const [titleSaveError, setTitleSaveError] = useState<string | null>(null);
@@ -65,17 +63,6 @@ export function NoteView() {
 
   const titleStateLabel =
     titleSaveState === "saving" ? "Saving title" : titleSaveState === "error" ? "Title error" : null;
-
-  useEffect(() => {
-    const saved = localStorage.getItem("notes-editor-mode");
-    if (saved === "raw" || saved === "rich") {
-      setEditorMode(saved);
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("notes-editor-mode", editorMode);
-  }, [editorMode]);
 
   useEffect(() => {
     function onFocusTitle() {
@@ -416,22 +403,6 @@ export function NoteView() {
           {titleSaveError && <p className="mt-1 text-xs text-danger">{titleSaveError}</p>}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <div className="editor-mode-toggle">
-            <button
-              className={`editor-mode-btn ${editorMode === "raw" ? "editor-mode-btn-active" : ""}`}
-              onClick={() => setEditorMode("raw")}
-              type="button"
-            >
-              Raw
-            </button>
-            <button
-              className={`editor-mode-btn ${editorMode === "rich" ? "editor-mode-btn-active" : ""}`}
-              onClick={() => setEditorMode("rich")}
-              type="button"
-            >
-              Rich
-            </button>
-          </div>
           {titleStateLabel && <span className="text-xs uppercase tracking-[0.16em] text-ink-soft">{titleStateLabel}</span>}
           <span className="text-xs uppercase tracking-[0.16em] text-ink-soft">{quietStateLabel}</span>
           {fm && !deleteConfirm && (
@@ -489,24 +460,12 @@ export function NoteView() {
         </div>
       )}
 
-      <div className={`stream-writer-surface ${editorMode === "rich" ? "stream-writer-surface-rich" : ""}`}>
-        {editorMode === "raw" ? (
-          <div className="stream-editor-pane">
-            <textarea
-              className="stream-textarea"
-              value={draftContent}
-              onChange={(e) => setDraftContent(e.target.value)}
-              placeholder="Write freely. Autosave and enrichment run quietly."
-              autoFocus={!noteId}
-            />
-          </div>
-        ) : (
-          <RichMarkdownEditor
-            value={draftContent}
-            onChange={setDraftContent}
-            autoFocus={!noteId}
-          />
-        )}
+      <div className="stream-writer-surface stream-writer-surface-rich">
+        <RichMarkdownEditor
+          value={draftContent}
+          onChange={setDraftContent}
+          autoFocus={!noteId}
+        />
         <p className="mt-2 text-xs text-ink-soft">
           {noteId
             ? "You can keep writing while metadata and actions update in place."
