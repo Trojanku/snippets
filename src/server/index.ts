@@ -204,12 +204,30 @@ app.patch("/api/notes/:id", async (req, res) => {
   const id = req.params.id;
   const { content } = req.body;
   
-  if (!content) return res.status(400).json({ error: "content required" });
+  if (!content || typeof content !== "string") {
+    return res.status(400).json({ error: "content required and must be string" });
+  }
+
+  const trimmed = content.trim();
+  if (trimmed.length < 1) {
+    return res.status(400).json({ error: "content cannot be empty" });
+  }
+
+  if (trimmed.length > 100000) {
+    return res.status(413).json({ error: "content too large (max 100KB)" });
+  }
   
   const note = getNote(id);
   if (!note) return res.status(404).json({ error: "Note not found" });
   
-  const updated = saveNoteContent(id, content);
+  let updated;
+  try {
+    updated = saveNoteContent(id, trimmed);
+  } catch (err) {
+    console.error(`[patch] Failed to save note ${id}: ${String(err)}`);
+    return res.status(500).json({ error: "Failed to save note" });
+  }
+
   if (!updated) return res.status(500).json({ error: "Failed to save note" });
   
   broadcast("notes-updated");
@@ -232,9 +250,18 @@ app.post("/api/notes", async (req, res) => {
     return res.status(400).json({ error: "content is required" });
   }
 
+  const trimmed = content.trim();
+  if (trimmed.length < 3) {
+    return res.status(400).json({ error: "content too short (minimum 3 characters)" });
+  }
+
+  if (trimmed.length > 100000) {
+    return res.status(413).json({ error: "content too large (max 100KB)" });
+  }
+
   let note;
   try {
-    note = createNote(content);
+    note = createNote(trimmed);
   } catch (err) {
     const errMsg = `Failed to create note: ${String(err)}`;
     console.error(`[notes] ${errMsg}`);
