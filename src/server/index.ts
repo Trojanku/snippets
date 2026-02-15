@@ -431,6 +431,35 @@ function saveAgentJobs(): void {
   fs.writeFileSync(AGENT_JOBS_PATH, JSON.stringify(jobs, null, 2));
 }
 
+function cleanupStalledJobs(): void {
+  const now = Date.now();
+  const STALE_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
+  let cleaned = 0;
+
+  for (const [jobId, job] of agentJobs.entries()) {
+    if (job.status !== "running") continue;
+
+    const startedMs = job.startedAt ? new Date(job.startedAt).getTime() : NaN;
+    if (!Number.isFinite(startedMs)) continue;
+
+    const ageMs = now - startedMs;
+    if (ageMs > STALE_THRESHOLD_MS) {
+      job.status = "failed";
+      job.completedAt = new Date().toISOString();
+      if (!job.result) {
+        job.result = `Job timeout: no completion callback after ${Math.round(ageMs / 60000)} minutes. Server may have been restarted.`;
+      }
+      updateActionJobStatus(job.noteId, job.actionIndex, job);
+      cleaned++;
+      console.warn(`[cleanup] Marked stalled job ${jobId} as failed after ${Math.round(ageMs / 60000)}m`);
+    }
+  }
+
+  if (cleaned > 0) {
+    saveAgentJobs();
+  }
+}
+
 app.post("/api/agent-actions/:noteId/:actionIndex/run", async (req, res) => {
   const { noteId, actionIndex } = req.params;
   const note = getNote(noteId);
@@ -766,6 +795,12 @@ ensureNoteFolders();
 migrateFolderIcons();
 fs.mkdirSync(PENDING_DIR, { recursive: true });
 loadAgentJobs();
+
+// Clean up stalled jobs on startup and periodically
+cleanupStalledJobs();
+const cleanupInterval = setInterval(() => {
+  cleanupStalledJobs();
+}, 5 * 60 * 1000); // Every 5 minutes
 
 const watcher = watch(
   [
