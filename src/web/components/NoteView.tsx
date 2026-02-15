@@ -47,6 +47,8 @@ export function NoteView() {
   const titleInputRef = useRef<HTMLInputElement | null>(null);
 
   const fm = note?.frontmatter ?? null;
+  const suggestedActions = fm?.suggestedActions || [];
+  const hasSuggestedActions = suggestedActions.length > 0;
 
   const hasUnsavedEdits = draftContent.trim() !== serverContentRef.current.trim();
 
@@ -460,28 +462,29 @@ export function NoteView() {
         </div>
       )}
 
-      <div className="stream-writer-surface stream-writer-surface-rich">
-        <RichMarkdownEditor
-          value={draftContent}
-          onChange={setDraftContent}
-          autoFocus={!noteId}
-        />
-        <p className="mt-2 text-xs text-ink-soft">
-          {noteId
-            ? "You can keep writing while metadata and actions update in place."
-            : "This note is created automatically after a short pause (min 3 characters)."}
-        </p>
-        {saveError && <p className="mt-1 text-xs text-danger">{saveError}</p>}
-        {hasUnsavedEdits && quietStateLabel !== "Saving" && (
-          <p className="mt-1 text-xs text-ink-soft">Pending local draft</p>
-        )}
-      </div>
+      <div className={hasSuggestedActions ? "grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start" : ""}>
+        <div className="stream-writer-surface stream-writer-surface-rich">
+          <RichMarkdownEditor
+            value={draftContent}
+            onChange={setDraftContent}
+            autoFocus={!noteId}
+          />
+          <p className="mt-2 text-xs text-ink-soft">
+            {noteId
+              ? "You can keep writing while metadata and actions update in place."
+              : "This note is created automatically after a short pause (min 3 characters)."}
+          </p>
+          {saveError && <p className="mt-1 text-xs text-danger">{saveError}</p>}
+          {hasUnsavedEdits && quietStateLabel !== "Saving" && (
+            <p className="mt-1 text-xs text-ink-soft">Pending local draft</p>
+          )}
+        </div>
 
-      {fm?.suggestedActions && fm.suggestedActions.length > 0 && (
-        <section className="mt-1 border-t border-line pt-4">
-          <h3 className="mb-3 font-serif text-5 font-semibold text-ink">Suggested actions</h3>
-          <div className="flex flex-col gap-3">
-            {fm.suggestedActions.map((a, i) => {
+        {hasSuggestedActions && (
+          <section className="mt-1 border-t border-line pt-4 xl:mt-0 xl:max-h-[calc(100vh-220px)] xl:overflow-auto xl:border-l xl:border-t-0 xl:pl-4 xl:pt-0">
+            <h3 className="mb-3 font-serif text-5 font-semibold text-ink">Suggested actions</h3>
+            <div className="flex flex-col gap-3">
+              {suggestedActions.map((a, i) => {
               const isAgent = a.assignee === "agent";
               const isCompleted = a.status === "completed";
               const isPriority = a.priority === "high";
@@ -600,10 +603,11 @@ export function NoteView() {
                   )}
                 </div>
               );
-            })}
-          </div>
-        </section>
-      )}
+              })}
+            </div>
+          </section>
+        )}
+      </div>
     </article>
   );
 }
