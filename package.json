@@ -9,7 +9,10 @@
     "dev:web": "vite",
     "build": "vite build",
     "start": "./run-server.sh src/server/index.ts",
-    "migrate:folders": "tsx scripts/migrate-notes-to-folders.ts"
+    "migrate:folders": "tsx scripts/migrate-notes-to-folders.ts",
+    "service:install": "bash scripts/install-systemd-dev-service.sh",
+    "service:status": "systemctl --user status snippets-dev.service --no-pager",
+    "service:restart": "systemctl --user restart snippets-dev.service"
   },
   "dependencies": {
     "@tiptap/react": "^3.19.0",

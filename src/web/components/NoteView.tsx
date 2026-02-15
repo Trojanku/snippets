@@ -1,7 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "../App.tsx";
 import { api } from "../lib/api.ts";
-import { RichMarkdownEditor } from "./RichMarkdownEditor.tsx";
+
+const RichMarkdownEditor = lazy(async () => {
+  const mod = await import("./RichMarkdownEditor.tsx");
+  return { default: mod.RichMarkdownEditor };
+});
 
 type SaveState = "idle" | "typing" | "saving" | "saved" | "error";
 type TitleSaveState = "idle" | "saving" | "error";
@@ -375,11 +379,22 @@ export function NoteView() {
       )}
 
       <div className="stream-writer-surface stream-writer-surface-rich">
-        <RichMarkdownEditor
-          value={draftContent}
-          onChange={setDraftContent}
-          autoFocus={!noteId}
-        />
+        <Suspense
+          fallback={
+            <textarea
+              className="control min-h-70 w-full resize-y rounded-lg bg-paper px-3 py-3 font-sans text-base leading-1.6"
+              value={draftContent}
+              onChange={(e) => setDraftContent(e.target.value)}
+              placeholder="Loading editor..."
+            />
+          }
+        >
+          <RichMarkdownEditor
+            value={draftContent}
+            onChange={setDraftContent}
+            autoFocus={!noteId}
+          />
+        </Suspense>
         <p className="mt-2 text-xs text-ink-soft">
           {noteId
             ? "You can keep writing while metadata and actions update in place."

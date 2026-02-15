@@ -39,6 +39,24 @@ npm run dev
 
 This starts both the Express server and Vite dev server. Open the URL printed in your terminal.
 
+## Keep it running (recommended)
+
+For a persistent local dev service (auto-restart, survives terminal closure):
+
+```bash
+npm run service:install
+npm run service:status
+```
+
+Useful commands:
+
+```bash
+npm run service:restart
+journalctl --user -u snippets-dev.service -f
+```
+
+Service template lives at `ops/systemd/snippets-dev.service`.
+
 ## Project Structure
 
 ```
