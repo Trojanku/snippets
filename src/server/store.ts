@@ -325,6 +325,19 @@ export function getConnections(): ConnectionGraph {
   }
 }
 
+export function addConnectionEdge(edge: ConnectionEdge): void {
+  const graph = getConnections();
+  const exists = graph.edges.some(
+    (e) =>
+      (e.source === edge.source && e.target === edge.target) ||
+      (e.source === edge.target && e.target === edge.source)
+  );
+  if (exists) return;
+  graph.edges.push(edge);
+  fs.mkdirSync(path.dirname(CONNECTIONS_PATH), { recursive: true });
+  fs.writeFileSync(CONNECTIONS_PATH, JSON.stringify(graph, null, 2));
+}
+
 export function getMemory(): string {
   try {
     return fs.readFileSync(MEMORY_PATH, "utf-8");
