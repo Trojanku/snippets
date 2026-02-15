@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useApp } from "../App.tsx";
 import { NoteView } from "./NoteView.tsx";
 
@@ -20,6 +20,16 @@ export function StreamView() {
   const [query, setQuery] = useState("");
   const [focusMode, setFocusMode] = useState(true);
 
+  useEffect(() => {
+    const saved = localStorage.getItem("notes-stream-focus-mode");
+    if (saved === "true") setFocusMode(true);
+    if (saved === "false") setFocusMode(false);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("notes-stream-focus-mode", String(focusMode));
+  }, [focusMode]);
+
   const recentNotes = useMemo(() => {
     const scoped = state.notes.filter((n) => inSelectedFolder(n.folderPath, state.selectedFolder));
     const q = query.trim().toLowerCase();
@@ -39,13 +49,7 @@ export function StreamView() {
       <div className="stream-header">
         <p className="text-xs uppercase tracking-[0.2em] text-ink-soft">Stream</p>
         <div className="flex items-center gap-2">
-          <button className="btn-muted" onClick={() => setFocusMode((prev) => !prev)}>
-            {focusMode ? "Show list" : "Hide list"}
-          </button>
-          <button
-            className="btn-muted"
-            onClick={() => dispatch({ type: "SET_ACTIVE_NOTE", note: null })}
-          >
+          <button className="btn-muted" onClick={() => dispatch({ type: "SET_ACTIVE_NOTE", note: null })}>
             New note
           </button>
         </div>
@@ -55,9 +59,14 @@ export function StreamView() {
         {!focusMode && (
           <aside className="stream-rail">
             <div className="mb-3">
-              <p className="text-xs uppercase tracking-[0.16em] text-ink-soft">Recent notes</p>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-xs uppercase tracking-[0.16em] text-ink-soft">Recent notes</p>
+                <button className="btn-muted" onClick={() => setFocusMode(true)}>
+                  Hide list
+                </button>
+              </div>
               <input
-                className="control mt-2 w-full"
+                className="control w-full"
                 placeholder="Search stream"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -99,6 +108,13 @@ export function StreamView() {
         )}
 
         <div className="min-w-0">
+          {focusMode && (
+            <div className="mb-2.5">
+              <button className="btn-muted" onClick={() => setFocusMode(false)}>
+                Show list
+              </button>
+            </div>
+          )}
           <NoteView />
         </div>
       </div>

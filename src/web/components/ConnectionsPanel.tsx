@@ -1,7 +1,11 @@
 import { useMemo } from "react";
 import { useApp } from "../App.tsx";
 
-export function ConnectionsPanel() {
+interface ConnectionsPanelProps {
+  sticky?: boolean;
+}
+
+export function ConnectionsPanel({ sticky = true }: ConnectionsPanelProps) {
   const { state, openNote } = useApp();
   const { activeNote, connections, notes } = state;
 
@@ -21,8 +25,12 @@ export function ConnectionsPanel() {
       .sort((a, b) => b.strength - a.strength);
   }, [activeNote, connections.edges, notes]);
 
+  const containerClass = sticky
+    ? "panel panel-rail sticky top-24 flex max-h-[calc(100vh-112px)] flex-col overflow-hidden p-3.5 max-[1060px]:static max-[1060px]:max-h-none"
+    : "panel panel-rail flex min-h-0 flex-col overflow-hidden p-3.5";
+
   return (
-    <aside className="panel panel-rail sticky top-24 flex max-h-[calc(100vh-112px)] flex-col overflow-hidden p-3.5 max-[1060px]:static max-[1060px]:max-h-none">
+    <aside className={containerClass}>
       <div className="mb-3 border-b border-line/70 pb-3">
         <h3 className="text-xs uppercase tracking-widest text-ink-soft">Connections</h3>
         <p className="text-sm text-ink-soft">Linked context for the active note</p>
