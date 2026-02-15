@@ -1,5 +1,5 @@
 import Markdown from "react-markdown";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useApp } from "../App.tsx";
 import { api } from "../lib/api.ts";
 
@@ -8,18 +8,22 @@ interface ActionEditState {
   result: string;
 }
 
+type SaveState = "idle" | "typing" | "saving" | "saved" | "error";
+
 export function NoteView() {
   const { state, openNote, refresh, dispatch } = useApp();
   const note = state.activeNote;
   const [retrying, setRetrying] = useState(false);
   const [retryError, setRetryError] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState<string>("");
-  const [isSaving, setIsSaving] = useState(false);
+  const [draftContent, setDraftContent] = useState<string>("");
+  const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [actionEditing, setActionEditing] = useState<ActionEditState | null>(null);
   const [runningActions, setRunningActions] = useState<Record<number, boolean>>({});
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const draftRef = useRef<string>("");
 
   if (!note) return null;
 
@@ -48,6 +52,63 @@ export function NoteView() {
     });
   }, [fm.suggestedActions, fm.updated]);
 
+  useEffect(() => {
+    setDraftContent(content);
+    draftRef.current = content;
+    setSaveState("idle");
+    setSaveError(null);
+  }, [fm.id]);
+
+  useEffect(() => {
+    draftRef.current = draftContent;
+
+    if (draftContent.trim() === content.trim()) {
+      setSaveState((prev) => (prev === "typing" ? "idle" : prev));
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+      return;
+    }
+
+    setSaveState("typing");
+    setSaveError(null);
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    const valueToSave = draftContent;
+
+    saveTimerRef.current = setTimeout(async () => {
+      setSaveState("saving");
+      try {
+        const updated = await api.saveNote(fm.id, valueToSave);
+        if (!updated) {
+          setSaveState("error");
+          setSaveError("Save failed");
+          return;
+        }
+
+        // Avoid stomping newer local edits if user kept typing while request was in flight.
+        if (draftRef.current === valueToSave) {
+          dispatch({ type: "SET_ACTIVE_NOTE", note: updated });
+          setSaveState("saved");
+          setTimeout(() => {
+            setSaveState((prev) => (prev === "saved" ? "idle" : prev));
+          }, 1500);
+        }
+      } catch (err) {
+        setSaveState("error");
+        setSaveError(err instanceof Error ? err.message : String(err));
+      }
+    }, 700);
+
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+    };
+  }, [draftContent, content, fm.id, dispatch]);
+
   async function handleRetry() {
     setRetrying(true);
     setRetryError(null);
@@ -58,35 +119,6 @@ export function NoteView() {
     await refresh();
     await openNote(fm.id);
     setRetrying(false);
-  }
-
-  function handleStartEdit() {
-    setEditedContent(content);
-    setIsEditing(true);
-  }
-
-  async function handleSaveEdit() {
-    if (editedContent.trim() === content.trim()) {
-      setIsEditing(false);
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const updated = await api.saveNote(fm.id, editedContent);
-      if (updated) {
-        setIsEditing(false);
-        await refresh();
-        await openNote(fm.id);
-      }
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  function handleCancelEdit() {
-    setIsEditing(false);
-    setEditedContent("");
   }
 
   async function handleCompleteAction(actionIndex: number, result?: string) {
@@ -175,13 +207,14 @@ export function NoteView() {
             <div className="mb-1 text-xs uppercase tracking-widest text-ink-soft">{fm.folderPath}</div>
           )}
         </div>
-        <div className="flex shrink-0 gap-2">
-          {!isEditing && (
-            <button className="btn-muted" onClick={handleStartEdit} title="Edit note">
-              Edit
-            </button>
-          )}
-          {!isEditing && !deleteConfirm && (
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="text-xs uppercase tracking-widest text-ink-soft">
+            {saveState === "typing" && "Typing..."}
+            {saveState === "saving" && "Saving..."}
+            {saveState === "saved" && "Saved"}
+            {saveState === "error" && "Save failed"}
+          </span>
+          {!deleteConfirm && (
             <button
               className="btn border-danger/40 text-danger hover:bg-danger-soft"
               onClick={() => setDeleteConfirm(true)}
@@ -235,33 +268,20 @@ export function NoteView() {
         </div>
       )}
 
-      {isEditing ? (
-        <div className="rounded-xl border border-line/80 bg-paper/45 px-4.5 py-4.5">
-          <textarea
-            className="control min-h-70 w-full resize-y rounded-lg bg-paper px-3 py-3 font-sans text-base leading-1.6"
-            value={editedContent}
-            onChange={(e) => setEditedContent(e.target.value)}
-            placeholder="Edit note content..."
-          />
-          <div className="mt-3 flex gap-2.5">
-            <button className="btn-accent" onClick={handleSaveEdit} disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save & Reprocess"}
-            </button>
-            <button className="btn-muted" onClick={handleCancelEdit} disabled={isSaving}>
-              Cancel
-            </button>
-          </div>
-          <p className="mt-2.5 text-xs italic text-ink-soft">
-            Saving will trigger re-categorization to detect changes in themes, kind, and actionability.
-          </p>
-        </div>
-      ) : (
-        <div className="note-content font-serif text-base leading-1.9 text-ink">
-          <Markdown>{content}</Markdown>
-        </div>
-      )}
+      <div className="rounded-xl border border-line/80 bg-paper/45 px-4.5 py-4.5">
+        <textarea
+          className="control min-h-70 w-full resize-y rounded-lg bg-paper px-3 py-3 font-sans text-base leading-1.6"
+          value={draftContent}
+          onChange={(e) => setDraftContent(e.target.value)}
+          placeholder="Write freely — saves automatically."
+        />
+        <p className="mt-2.5 text-xs italic text-ink-soft">
+          Auto-save runs in the background and reprocessing updates themes/actions progressively.
+        </p>
+        {saveError && <p className="mt-1.5 text-xs text-danger">{saveError}</p>}
+      </div>
 
-      {fm.suggestedActions && fm.suggestedActions.length > 0 && !isEditing && (
+      {fm.suggestedActions && fm.suggestedActions.length > 0 && (
         <section className="mt-2 border-t border-line pt-5">
           <h3 className="mb-3.5 font-serif text-5 font-semibold text-ink">Suggested Actions</h3>
           <div className="flex flex-col gap-3">
