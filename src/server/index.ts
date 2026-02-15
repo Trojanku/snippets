@@ -354,6 +354,48 @@ interface AgentJob {
   linkedNoteId?: string;
   linkedNoteTitle?: string;
 }
+
+// Track recent action executions to prevent spam/duplicates
+interface ActionExecution {
+  noteId: string;
+  actionIndex: number;
+  timestamp: number;
+}
+const recentActions = new Map<string, ActionExecution>();
+const ACTION_COOLDOWN_MS = 60 * 1000; // 60 second cooldown per action
+
+function getActionKey(noteId: string, actionIdx: number): string {
+  return `${noteId}#${actionIdx}`;
+}
+
+function checkActionCooldown(noteId: string, actionIdx: number): { allowed: boolean; reason?: string } {
+  const key = getActionKey(noteId, actionIdx);
+  const recent = recentActions.get(key);
+  const now = Date.now();
+
+  if (recent && now - recent.timestamp < ACTION_COOLDOWN_MS) {
+    const remaining = Math.ceil((ACTION_COOLDOWN_MS - (now - recent.timestamp)) / 1000);
+    return { allowed: false, reason: `Action already ran recently. Wait ${remaining}s before retrying.` };
+  }
+
+  return { allowed: true };
+}
+
+function recordActionExecution(noteId: string, actionIdx: number): void {
+  const key = getActionKey(noteId, actionIdx);
+  recentActions.set(key, { noteId, actionIndex: actionIdx, timestamp: Date.now() });
+
+  // Cleanup old entries periodically
+  if (recentActions.size > 200) {
+    const now = Date.now();
+    for (const [k, v] of recentActions.entries()) {
+      if (now - v.timestamp > 5 * 60 * 1000) {
+        recentActions.delete(k);
+      }
+    }
+  }
+}
+
 const agentJobs = new Map<string, AgentJob>();
 
 function loadAgentJobs(): void {
@@ -386,10 +428,18 @@ app.post("/api/agent-actions/:noteId/:actionIndex/run", async (req, res) => {
     return res.status(400).json({ error: "Action index out of range" });
   }
 
+  // Check cooldown to prevent duplicate/spam triggers
+  const cooldown = checkActionCooldown(noteId, idx);
+  if (!cooldown.allowed) {
+    return res.status(429).json({ error: cooldown.reason || "Action is on cooldown" });
+  }
+
   const action = actions[idx];
   if (action.assignee !== "agent") {
     return res.status(400).json({ error: "Only agent actions can be run" });
   }
+
+  recordActionExecution(noteId, idx);
 
   const jobId = `job-${noteId}-${idx}-${Date.now()}`;
   const job: AgentJob = {
