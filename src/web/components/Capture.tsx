@@ -27,7 +27,7 @@ export function Capture() {
         <h2 className="font-serif text-6xl font-semibold text-ink">Write it once</h2>
       </div>
       <textarea
-        className="control min-h-[320px] w-full resize-y border-line/80 bg-paper/45 p-4 font-serif text-[20px] leading-[1.75] text-ink"
+        className="h-80 control min-h-[120px] w-full resize-y border-line/80 bg-paper/45 p-4 font-serif text-[20px] leading-[1.75] text-ink"
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="What needs to be remembered?"
